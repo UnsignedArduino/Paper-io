@@ -1,0 +1,12 @@
+{
+    "=g1%qonA1MQzZ{2uocGT": {
+        "data": "hwQHAAcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "mimeType": "image/x-mkcd-f4",
+        "displayName": "player_image_template"
+    },
+    "*": {
+        "mimeType": "image/x-mkcd-f4",
+        "dataEncoding": "base64",
+        "namespace": "myImages"
+    }
+}
