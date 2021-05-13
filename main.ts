@@ -30,6 +30,15 @@ function make_player (color: number, col: number, row: number) {
     tiles.setTileAt(tiles.getTileLocation(col + 0, row + 1), color_to_tile[color])
     tiles.setTileAt(tiles.getTileLocation(col + 1, row + 1), color_to_tile[color])
     tiles.placeOnTile(sprite_snake, tiles.getTileLocation(col, row))
+    if (Math.percentChance(25)) {
+        sprite_snake.vx = constants_snake_speed
+    } else if (Math.percentChance(33)) {
+        sprite_snake.vx = constants_snake_speed * -1
+    } else if (Math.percentChance(50)) {
+        sprite_snake.vy = constants_snake_speed
+    } else {
+        sprite_snake.vy = constants_snake_speed * -1
+    }
     return sprite_snake
 }
 function make_tilemap () {
@@ -39,6 +48,8 @@ function make_tilemap () {
 let sprite_snake: Sprite = null
 let snake_image: Image = null
 let color_to_tile: Image[] = []
+let constants_snake_speed = 0
+constants_snake_speed = 50
 make_tilemap()
 let sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
 scene.cameraFollowSprite(sprite_player)
