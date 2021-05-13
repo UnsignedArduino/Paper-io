@@ -2,7 +2,11 @@
     "name": "Paper.io",
     "description": "",
     "dependencies": {
-        "device": "*"
+        "device": "*",
+        "Timers": "github:microsoft/arcade-timers#v1.1.0",
+        "tilemaps": "github:microsoft/pxt-tilemaps#v1.11.0",
+        "arcade-sprite-data": "github:microsoft/arcade-sprite-data#v0.1.0",
+        "small-tilemaps": "github:riknoll/small-tilemaps#v0.0.1"
     },
     "files": [
         "main.blocks",
