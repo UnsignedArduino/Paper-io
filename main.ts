@@ -44,6 +44,40 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, false, false)
     }
 })
+function draw_line_high_tilemap (from_col: number, from_row: number, to_col: number, to_row: number, tile: Image) {
+    dx = to_col - from_col
+    dy = to_row - from_row
+    xi = 1
+    if (dx < 0) {
+        xi = -1
+        dx = dx * -1
+    }
+    D = 2 * dx - dy
+    x = from_col
+    y = from_row
+    for (let index = 0; index < to_row - from_row; index++) {
+        tiles.setTileAt(tiles.getTileLocation(x, y), tile)
+        if (D > 0) {
+            x += xi
+            D += 2 * (dx - dy)
+        } else {
+            D += 2 * dx
+        }
+        y += 1
+    }
+}
+function sort_locations_by_col () {
+    for (let index = 0; index <= locations.length - 1; index++) {
+        for (let index2 = 0; index2 <= locations.length - 2; index2++) {
+            if (tiles.locationXY(locations[index], tiles.XY.column) < tiles.locationXY(locations[index2 + 1], tiles.XY.column)) {
+                temp = locations[index2 + 1]
+                locations[index2 + 1] = locations[index]
+                locations[index] = temp
+            }
+        }
+    }
+    locations.push(locations.shift())
+}
 scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprite, location) {
     tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
 })
@@ -85,6 +119,22 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, false)
     }
 })
+// totally not copied from https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+function draw_line_tilemap (from_col: number, from_row: number, to_col: number, to_row: number, tile: Image) {
+    if (Math.abs(from_row - from_col) < Math.abs(to_col - from_col)) {
+        if (from_col > to_col) {
+            draw_line_low_tilemap(to_col, to_row, from_col, from_row, tile)
+        } else {
+            draw_line_low_tilemap(from_col, from_row, to_col, to_row, tile)
+        }
+    } else {
+        if (from_row > to_row) {
+            draw_line_high_tilemap(to_col, to_row, from_col, from_row, tile)
+        } else {
+            draw_line_high_tilemap(from_col, from_row, to_col, to_row, tile)
+        }
+    }
+}
 function sort_locations_by_row () {
     for (let index = 0; index <= locations.length - 1; index++) {
         for (let index2 = 0; index2 <= locations.length - 2; index2++) {
@@ -144,13 +194,42 @@ function make_tilemap () {
     scene.setBackgroundColor(13)
     tiles.setSmallTilemap(tilemap`tilemap`)
 }
+function draw_line_low_tilemap (from_col: number, from_row: number, to_col: number, to_row: number, tile: Image) {
+    dx = to_col - from_col
+    dy = to_row - from_row
+    yi = 1
+    if (dy < 0) {
+        yi = -1
+        dy = dy * -1
+    }
+    D = 2 * dy - dx
+    y = from_row
+    x = from_col
+    for (let index = 0; index < to_col - from_col; index++) {
+        tiles.setTileAt(tiles.getTileLocation(x, y), tile)
+        if (D > 0) {
+            y += yi
+            D += 2 * (dy - dx)
+        } else {
+            D += 2 * dy
+        }
+        x += 1
+    }
+}
 let to_location: tiles.Location = null
 let from_location: tiles.Location = null
+let yi = 0
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
 let temp: tiles.Location = null
 let locations: tiles.Location[] = []
+let y = 0
+let x = 0
+let D = 0
+let xi = 0
+let dy = 0
+let dx = 0
 let color_to_body: Image[] = []
 let color_to_tile: Image[] = []
 let tile_traverse_time = 0
@@ -175,18 +254,29 @@ game.onUpdate(function () {
         }
     }
 })
-game.onUpdate(function () {
+forever(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (sprite_snake.tileKindAt(TileDirection.Center, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
             if (tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")]).length > 0) {
+                sprites.setDataNumber(sprite_snake, "old_vx", sprite_snake.vx)
+                sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
+                sprite_snake.setVelocity(0, 0)
                 locations = tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])
                 sort_locations_by_row()
+                sort_locations_by_col()
                 for (let index = 0; index <= locations.length - 1; index++) {
                     from_location = locations[index]
-                    to_location = locations[index + 1]
+                    if (index < locations.length - 1) {
+                        to_location = locations[index + 1]
+                    } else {
+                        to_location = locations[index]
+                    }
+                    draw_line_tilemap(tiles.locationXY(from_location, tiles.XY.column), tiles.locationXY(from_location, tiles.XY.row), tiles.locationXY(to_location, tiles.XY.column), tiles.locationXY(to_location, tiles.XY.row), color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                     tiles.setTileAt(from_location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                     tiles.setTileAt(to_location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
+                    pause(100)
                 }
+                sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
             }
         }
