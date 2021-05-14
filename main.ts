@@ -132,6 +132,8 @@ function make_tilemap () {
     scene.setBackgroundColor(13)
     tiles.setSmallTilemap(tilemap`tilemap`)
 }
+let temp: tiles.Location = null
+let locations: tiles.Location[] = []
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
@@ -163,7 +165,18 @@ game.onUpdate(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (sprite_snake.tileKindAt(TileDirection.Center, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
             if (tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")]).length > 0) {
-                for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
+                locations = tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])
+                for (let index = 0; index <= locations.length - 1; index++) {
+                    for (let index2 = 0; index2 <= locations.length - 2; index2++) {
+                        if (tiles.locationXY(locations[index], tiles.XY.row) < tiles.locationXY(locations[index2 + 1], tiles.XY.row)) {
+                            temp = locations[index2 + 1]
+                            locations[index2 + 1] = locations[index]
+                            locations[index] = temp
+                        }
+                    }
+                }
+                locations.push(locations.shift())
+                for (let location of locations) {
                     tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                 }
                 continue;
