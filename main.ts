@@ -1,5 +1,9 @@
+namespace SpriteKind {
+    export const Tail = SpriteKind.create()
+}
 function define_constants () {
     constants_snake_speed = 50
+    tile_traverse_time = 1000 / constants_snake_speed * tiles.tileWidth()
     color_to_tile = [
     assets.tile`transparency8`,
     assets.tile`white`,
@@ -37,26 +41,53 @@ function define_constants () {
 }
 controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
-        if (!(sprite_snake.vy > 0)) {
-            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
-            sprite_snake.setVelocity(0, constants_snake_speed * -1)
-        }
+        move_snake(sprite_player, false, false)
     }
 })
+scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprite, location) {
+    tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
+})
+function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
+    timer.throttle("snake_at_col_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column) + "_row_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row) + "_turn", tile_traverse_time, function () {
+        if (vx_or_vy) {
+            if (pos_or_neg) {
+                if (!(snake.vx < 0)) {
+                    tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
+                    snake.setVelocity(constants_snake_speed, 0)
+                }
+            } else {
+                if (!(snake.vx > 0)) {
+                    tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
+                    snake.setVelocity(constants_snake_speed * -1, 0)
+                }
+            }
+        } else {
+            if (pos_or_neg) {
+                if (!(snake.vy < 0)) {
+                    tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
+                    snake.setVelocity(0, constants_snake_speed)
+                }
+            } else {
+                if (!(snake.vy > 0)) {
+                    tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
+                    snake.setVelocity(0, constants_snake_speed * -1)
+                }
+            }
+        }
+        sprites.setDataBoolean(snake, "turning", true)
+        timer.after(tile_traverse_time, function () {
+            sprites.setDataBoolean(snake, "turning", false)
+        })
+    })
+}
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
-        if (!(sprite_snake.vx > 0)) {
-            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
-            sprite_snake.setVelocity(constants_snake_speed * -1, 0)
-        }
+        move_snake(sprite_player, true, false)
     }
 })
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
-        if (!(sprite_snake.vx < 0)) {
-            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
-            sprite_snake.setVelocity(constants_snake_speed, 0)
-        }
+        move_snake(sprite_player, true, true)
     }
 })
 function make_player (color: number, col: number, row: number) {
@@ -65,6 +96,11 @@ function make_player (color: number, col: number, row: number) {
     snake_image.drawRect(0, 0, 7, 7, 15)
     sprite_snake = sprites.create(snake_image, SpriteKind.Player)
     sprites.setDataNumber(sprite_snake, "color", color)
+    sprites.setDataBoolean(sprite_snake, "turning", false)
+    sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
+    sprite_tail.setFlag(SpriteFlag.Invisible, true)
+    sprites.setDataSprite(sprite_tail, "head", sprite_snake)
+    sprites.setDataSprite(sprite_snake, "tail", sprite_tail)
     tiles.setTileAt(tiles.getTileLocation(col - 1, row - 1), color_to_tile[color])
     tiles.setTileAt(tiles.getTileLocation(col + 0, row - 1), color_to_tile[color])
     tiles.setTileAt(tiles.getTileLocation(col + 1, row - 1), color_to_tile[color])
@@ -75,6 +111,7 @@ function make_player (color: number, col: number, row: number) {
     tiles.setTileAt(tiles.getTileLocation(col + 0, row + 1), color_to_tile[color])
     tiles.setTileAt(tiles.getTileLocation(col + 1, row + 1), color_to_tile[color])
     tiles.placeOnTile(sprite_snake, tiles.getTileLocation(col, row))
+    tiles.placeOnTile(sprite_tail, tiles.getTileLocation(col, row))
     if (Math.percentChance(25)) {
         sprite_snake.vx = constants_snake_speed
     } else if (Math.percentChance(33)) {
@@ -88,26 +125,37 @@ function make_player (color: number, col: number, row: number) {
 }
 controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
-        if (!(sprite_snake.vy < 0)) {
-            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
-            sprite_snake.setVelocity(0, constants_snake_speed)
-        }
+        move_snake(sprite_player, false, true)
     }
 })
 function make_tilemap () {
     scene.setBackgroundColor(13)
     tiles.setSmallTilemap(tilemap`tilemap`)
 }
-scene.onOverlapTile(SpriteKind.Player, assets.tile`transparency8`, function (sprite, location) {
-	
-})
-let snake_image: Image = null
+let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
+let snake_image: Image = null
 let color_to_body: Image[] = []
 let color_to_tile: Image[] = []
+let tile_traverse_time = 0
 let constants_snake_speed = 0
 let sprite_player: Sprite = null
-define_constants()
 make_tilemap()
+define_constants()
 sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
 scene.cameraFollowSprite(sprite_player)
+game.onUpdate(function () {
+    for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
+        if (!(sprites.readDataBoolean(sprite_snake, "turning"))) {
+            if (sprite_snake.vy > 0) {
+                tiles.placeOnTile(sprites.readDataSprite(sprite_snake, "tail"), tiles.locationInDirection(tiles.locationOfSprite(sprite_snake), CollisionDirection.Top))
+            } else if (sprite_snake.vx < 0) {
+                tiles.placeOnTile(sprites.readDataSprite(sprite_snake, "tail"), tiles.locationInDirection(tiles.locationOfSprite(sprite_snake), CollisionDirection.Right))
+            } else if (sprite_snake.vy < 0) {
+                tiles.placeOnTile(sprites.readDataSprite(sprite_snake, "tail"), tiles.locationInDirection(tiles.locationOfSprite(sprite_snake), CollisionDirection.Bottom))
+            } else {
+                tiles.placeOnTile(sprites.readDataSprite(sprite_snake, "tail"), tiles.locationInDirection(tiles.locationOfSprite(sprite_snake), CollisionDirection.Left))
+            }
+        }
+    }
+})

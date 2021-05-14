@@ -13,6 +13,10 @@ namespace myImages {
 . . . . . . . 
 . . . . . . . 
 `;
+            case "zj%7+:KD+92":
+            case "tail":return img`
+3 
+`;
         }
         return null;
     })
