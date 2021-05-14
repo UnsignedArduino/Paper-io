@@ -139,9 +139,6 @@ function make_tilemap () {
     scene.setBackgroundColor(13)
     tiles.setSmallTilemap(tilemap`tilemap`)
 }
-let to_location: tiles.Location = null
-let from_location: tiles.Location = null
-let locations: tiles.Location[] = []
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
@@ -176,14 +173,6 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vx", sprite_snake.vx)
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
-                locations = tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])
-                for (let index = 0; index <= locations.length - 1; index++) {
-                    from_location = locations[index]
-                    to_location = locations[index + 1]
-                    tiles.setTileAt(from_location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
-                    tiles.setTileAt(to_location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
-                    pause(100)
-                }
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
             }
