@@ -49,16 +49,19 @@ scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprit
 })
 function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
     timer.throttle("snake_at_col_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column) + "_row_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row) + "_turn", tile_traverse_time, function () {
+        sprites.setDataNumber(snake, "last_last_turn", sprites.readDataNumber(snake, "last_turn"))
         if (vx_or_vy) {
             if (pos_or_neg) {
                 if (!(snake.vx < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed, 0)
+                    sprites.setDataNumber(snake, "last_turn", CollisionDirection.Right)
                 }
             } else {
                 if (!(snake.vx > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed * -1, 0)
+                    sprites.setDataNumber(snake, "last_turn", CollisionDirection.Left)
                 }
             }
         } else {
@@ -66,11 +69,13 @@ function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
                 if (!(snake.vy < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed)
+                    sprites.setDataNumber(snake, "last_turn", CollisionDirection.Bottom)
                 }
             } else {
                 if (!(snake.vy > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed * -1)
+                    sprites.setDataNumber(snake, "last_turn", CollisionDirection.Top)
                 }
             }
         }
@@ -97,6 +102,8 @@ function make_player (color: number, col: number, row: number) {
     sprite_snake = sprites.create(snake_image, SpriteKind.Player)
     sprites.setDataNumber(sprite_snake, "color", color)
     sprites.setDataBoolean(sprite_snake, "turning", false)
+    sprites.setDataNumber(sprite_snake, "last_turn", -1)
+    sprites.setDataNumber(sprite_snake, "last_last_turn", -1)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
