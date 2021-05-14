@@ -1,7 +1,5 @@
 namespace SpriteKind {
     export const Tail = SpriteKind.create()
-    export const Pointer = SpriteKind.create()
-    export const Turn = SpriteKind.create()
 }
 function define_constants () {
     constants_snake_speed = 50
@@ -48,10 +46,6 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
 })
 scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprite, location) {
     tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
-    sprites.setDataBoolean(sprites.readDataSprite(sprite, "head"), "claiming", true)
-    if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite, "head"), "was_claiming"))) {
-        sprites.setDataBoolean(sprites.readDataSprite(sprite, "head"), "was_claiming", true)
-    }
 })
 function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
     timer.throttle("snake_at_col_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column) + "_row_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row) + "_turn", tile_traverse_time, function () {
@@ -103,54 +97,10 @@ function make_player (color: number, col: number, row: number) {
     sprite_snake = sprites.create(snake_image, SpriteKind.Player)
     sprites.setDataNumber(sprite_snake, "color", color)
     sprites.setDataBoolean(sprite_snake, "turning", false)
-    sprites.setDataBoolean(sprite_snake, "was_claiming", false)
-    sprites.setDataBoolean(sprite_snake, "claiming", false)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
     sprites.setDataSprite(sprite_snake, "tail", sprite_tail)
-    sprite_fill_ptr = sprites.create(img`
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        `, SpriteKind.Pointer)
-    sprite_fill_ptr.setFlag(SpriteFlag.Invisible, false)
-    sprites.setDataSprite(sprite_fill_ptr, "head", sprite_snake)
-    sprites.setDataSprite(sprite_snake, "pointer", sprite_fill_ptr)
-    sprite_last_turn = sprites.create(img`
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        . . . . . . . . . . . . . . . . 
-        `, SpriteKind.Turn)
-    sprite_last_turn.setFlag(SpriteFlag.Invisible, false)
-    sprites.setDataSprite(sprite_last_turn, "head", sprite_snake)
-    sprites.setDataSprite(sprite_snake, "last_turn", sprite_last_turn)
     tiles.setTileAt(tiles.getTileLocation(col - 1, row - 1), color_to_tile[color])
     tiles.setTileAt(tiles.getTileLocation(col + 0, row - 1), color_to_tile[color])
     tiles.setTileAt(tiles.getTileLocation(col + 1, row - 1), color_to_tile[color])
@@ -185,8 +135,6 @@ function make_tilemap () {
 let to_location: tiles.Location = null
 let from_location: tiles.Location = null
 let locations: tiles.Location[] = []
-let sprite_last_turn: Sprite = null
-let sprite_fill_ptr: Sprite = null
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
@@ -221,7 +169,6 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vx", sprite_snake.vx)
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
-                sprites.setDataBoolean(sprite_snake, "claiming", false)
                 locations = tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])
                 for (let index = 0; index <= locations.length - 1; index++) {
                     from_location = locations[index]
@@ -231,9 +178,6 @@ forever(function () {
                     pause(100)
                 }
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
-                timer.after(tile_traverse_time, function () {
-                    sprites.setDataBoolean(sprite_snake, "was_claiming", false)
-                })
                 continue;
             }
         }

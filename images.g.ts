@@ -17,24 +17,6 @@ namespace myImages {
             case "tail":return img`
 3 
 `;
-            case "~@]|tUYgk~ZynxEoGB++":
-            case "fill_pointer":return img`
-7 7 7 7 7 7 
-7 7 7 7 7 7 
-7 7 7 7 7 7 
-7 7 7 7 7 7 
-7 7 7 7 7 7 
-7 7 7 7 7 7 
-`;
-            case "_)a58Jd2+TyVtn`,!EWF":
-            case "last_turn":return img`
-a a a a a a 
-a a a a a a 
-a a a a a a 
-a a a a a a 
-a a a a a a 
-a a a a a a 
-`;
         }
         return null;
     })
