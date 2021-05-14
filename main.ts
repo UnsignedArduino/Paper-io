@@ -1,3 +1,27 @@
+controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (sprite_player) {
+        if (!(sprite_snake.vy > 0)) {
+            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
+            sprite_snake.setVelocity(0, constants_snake_speed * -1)
+        }
+    }
+})
+controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (sprite_player) {
+        if (!(sprite_snake.vx > 0)) {
+            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
+            sprite_snake.setVelocity(constants_snake_speed * -1, 0)
+        }
+    }
+})
+controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (sprite_player) {
+        if (!(sprite_snake.vx < 0)) {
+            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
+            sprite_snake.setVelocity(constants_snake_speed, 0)
+        }
+    }
+})
 function make_player (color: number, col: number, row: number) {
     color_to_tile = [
     assets.tile`transparency8`,
@@ -41,15 +65,24 @@ function make_player (color: number, col: number, row: number) {
     }
     return sprite_snake
 }
+controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (sprite_player) {
+        if (!(sprite_snake.vy < 0)) {
+            tiles.placeOnTile(sprite_snake, tiles.locationOfSprite(sprite_snake))
+            sprite_snake.setVelocity(0, constants_snake_speed)
+        }
+    }
+})
 function make_tilemap () {
     scene.setBackgroundColor(13)
     tiles.setSmallTilemap(tilemap`tilemap`)
 }
-let sprite_snake: Sprite = null
 let snake_image: Image = null
 let color_to_tile: Image[] = []
+let sprite_snake: Sprite = null
+let sprite_player: Sprite = null
 let constants_snake_speed = 0
 constants_snake_speed = 50
 make_tilemap()
-let sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
+sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
 scene.cameraFollowSprite(sprite_player)
