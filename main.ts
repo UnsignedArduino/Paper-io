@@ -159,3 +159,15 @@ game.onUpdate(function () {
         }
     }
 })
+game.onUpdate(function () {
+    for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
+        if (sprite_snake.tileKindAt(TileDirection.Center, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
+            if (tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")]).length > 0) {
+                for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
+                    tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
+                }
+                continue;
+            }
+        }
+    }
+})
