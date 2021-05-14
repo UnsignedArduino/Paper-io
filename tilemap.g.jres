@@ -87,6 +87,84 @@
         "tilemapTile": true,
         "displayName": "brown"
     },
+    "tile14": {
+        "data": "hwQIAAgAAAAAAAAAEBAQAAABAQEQEBAAAAEBARAQEAAAAQEBAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "white_body"
+    },
+    "tile15": {
+        "data": "hwQIAAgAAAAAAAAAICAgAAACAgIgICAAAAICAiAgIAAAAgICAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "red_body"
+    },
+    "tile16": {
+        "data": "hwQIAAgAAAAAAAAAMDAwAAADAwMwMDAAAAMDAzAwMAAAAwMDAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "pink_body"
+    },
+    "tile17": {
+        "data": "hwQIAAgAAAAAAAAAQEBAAAAEBARAQEAAAAQEBEBAQAAABAQEAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "orange_body"
+    },
+    "tile18": {
+        "data": "hwQIAAgAAAAAAAAAUFBQAAAFBQVQUFAAAAUFBVBQUAAABQUFAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "yellow_body"
+    },
+    "tile19": {
+        "data": "hwQIAAgAAAAAAAAAYGBgAAAGBgZgYGAAAAYGBmBgYAAABgYGAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "teal_body"
+    },
+    "tile20": {
+        "data": "hwQIAAgAAAAAAAAAcHBwAAAHBwdwcHAAAAcHB3BwcAAABwcHAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "green_body"
+    },
+    "tile21": {
+        "data": "hwQIAAgAAAAAAAAAgICAAAAICAiAgIAAAAgICICAgAAACAgIAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "dark_blue_body"
+    },
+    "tile22": {
+        "data": "hwQIAAgAAAAAAAAAkJCQAAAJCQmQkJAAAAkJCZCQkAAACQkJAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "light_blue_body"
+    },
+    "tile23": {
+        "data": "hwQIAAgAAAAAAAAAoKCgAAAKCgqgoKAAAAoKCqCgoAAACgoKAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "purple_body"
+    },
+    "tile24": {
+        "data": "hwQIAAgAAAAAAAAAsLCwAAALCwuwsLAAAAsLC7CwsAAACwsLAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "light_purple_body"
+    },
+    "tile25": {
+        "data": "hwQIAAgAAAAAAAAAwMDAAAAMDAzAwMAAAAwMDMDAwAAADAwMAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "dark_purple_body"
+    },
+    "tile27": {
+        "data": "hwQIAAgAAAAAAAAA4ODgAAAODg7g4OAAAA4ODuDg4AAADg4OAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "tilemapTile": true,
+        "displayName": "brown_body"
+    },
     "level1": {
         "id": "level1",
         "mimeType": "application/mkcd-tilemap",

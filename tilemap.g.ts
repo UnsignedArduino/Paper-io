@@ -30,6 +30,32 @@ namespace myTiles {
     export const tile12 = image.ofBuffer(hex``);
     //% fixedInstance jres blockIdentity=images._tile
     export const tile13 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile14 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile15 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile16 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile17 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile18 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile19 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile20 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile21 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile22 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile23 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile24 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile25 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile27 = image.ofBuffer(hex``);
 
     helpers._registerFactory("tilemap", function(name: string) {
         switch(helpers.stringTrim(name)) {
@@ -120,6 +146,32 @@ namespace myTiles {
             case "tile12":return tile12;
             case "brown":
             case "tile13":return tile13;
+            case "white_body":
+            case "tile14":return tile14;
+            case "red_body":
+            case "tile15":return tile15;
+            case "pink_body":
+            case "tile16":return tile16;
+            case "orange_body":
+            case "tile17":return tile17;
+            case "yellow_body":
+            case "tile18":return tile18;
+            case "teal_body":
+            case "tile19":return tile19;
+            case "green_body":
+            case "tile20":return tile20;
+            case "dark_blue_body":
+            case "tile21":return tile21;
+            case "light_blue_body":
+            case "tile22":return tile22;
+            case "purple_body":
+            case "tile23":return tile23;
+            case "light_purple_body":
+            case "tile24":return tile24;
+            case "dark_purple_body":
+            case "tile25":return tile25;
+            case "brown_body":
+            case "tile27":return tile27;
         }
         return null;
     })
