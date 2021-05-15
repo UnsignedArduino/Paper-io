@@ -65,12 +65,18 @@ function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed, 0)
                     sprites.setDataNumber(snake, "l_turn", CollisionDirection.Right)
+                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
+                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Right)
+                    }
                 }
             } else {
                 if (!(snake.vx > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed * -1, 0)
                     sprites.setDataNumber(snake, "l_turn", CollisionDirection.Left)
+                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
+                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Left)
+                    }
                 }
             }
         } else {
@@ -79,12 +85,18 @@ function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed)
                     sprites.setDataNumber(snake, "l_turn", CollisionDirection.Bottom)
+                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
+                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Bottom)
+                    }
                 }
             } else {
                 if (!(snake.vy > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed * -1)
                     sprites.setDataNumber(snake, "l_turn", CollisionDirection.Top)
+                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
+                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Top)
+                    }
                 }
             }
         }
@@ -120,6 +132,7 @@ function make_player (color: number, col: number, row: number) {
     sprites.setDataNumber(sprite_snake, "start_claim_col", 0)
     sprites.setDataNumber(sprite_snake, "start_claim_row", 0)
     sprites.setDataBoolean(sprite_snake, "claiming", false)
+    sprites.setDataNumber(sprite_snake, "first_turn", -1)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
@@ -182,7 +195,7 @@ function direction_to_str (direction: number) {
 function get_start (snake_head: Sprite) {
     return tiles.getTileLocation(sprites.readDataNumber(snake_head, "start_claim_col"), sprites.readDataNumber(snake_head, "start_claim_row"))
 }
-let end: tiles.Location = null
+let inside_location: tiles.Location = null
 let start: tiles.Location = null
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
@@ -217,15 +230,20 @@ game.onUpdate(function () {
 forever(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (sprite_snake.tileKindAt(TileDirection.Center, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
+            pause(20)
             if (tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")]).length > 0) {
                 sprites.setDataNumber(sprite_snake, "old_vx", sprite_snake.vx)
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
                 start = get_start(sprite_snake)
-                end = tiles.locationOfSprite(sprite_snake)
+                inside_location = tiles.locationInDirection(start, sprites.readDataNumber(sprite_snake, "first_turn"))
+                sprites.setDataNumber(sprite_snake, "first_turn", -1)
                 tiles.setTileAt(start, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
-                tiles.setTileAt(end, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
+                tiles.setTileAt(inside_location, assets.tile`red`)
+                for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
+                    tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
+                }
                 pause(1000)
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
