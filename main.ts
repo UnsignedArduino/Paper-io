@@ -166,9 +166,6 @@ function flip_direction (direction: number) {
         return CollisionDirection.Top
     }
 }
-function get_inner_piece (snake_head: Sprite) {
-    return tiles.getTileLocation(sprites.readDataNumber(snake_head, "start_claim_col"), sprites.readDataNumber(snake_head, "start_claim_row"))
-}
 function direction_to_str (direction: number) {
     if (direction == CollisionDirection.Left) {
         return "l"
@@ -182,6 +179,11 @@ function direction_to_str (direction: number) {
         return "-"
     }
 }
+function get_start (snake_head: Sprite) {
+    return tiles.getTileLocation(sprites.readDataNumber(snake_head, "start_claim_col"), sprites.readDataNumber(snake_head, "start_claim_row"))
+}
+let end: tiles.Location = null
+let start: tiles.Location = null
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
@@ -220,7 +222,10 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
-                tiles.setTileAt(get_inner_piece(sprite_snake), color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
+                start = get_start(sprite_snake)
+                end = tiles.locationOfSprite(sprite_snake)
+                tiles.setTileAt(start, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
+                tiles.setTileAt(end, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                 pause(1000)
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
