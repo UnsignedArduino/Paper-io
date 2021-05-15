@@ -46,9 +46,16 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
 })
 scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprite, location) {
     tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
+    if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite, "head"), "claiming"))) {
+        sprites.setDataBoolean(sprites.readDataSprite(sprite, "head"), "claiming", true)
+        sprites.setDataNumber(sprites.readDataSprite(sprite, "head"), "start_claim_col", tiles.locationXY(location, tiles.XY.column))
+        sprites.setDataNumber(sprites.readDataSprite(sprite, "head"), "start_claim_row", tiles.locationXY(location, tiles.XY.row))
+    }
 })
 function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
     timer.throttle("snake_color_" + sprites.readDataNumber(snake, "color"), tile_traverse_time, function () {
+        sprites.setDataNumber(snake, "llllll_turn", sprites.readDataNumber(snake, "lllll_turn"))
+        sprites.setDataNumber(snake, "lllll_turn", sprites.readDataNumber(snake, "llll_turn"))
         sprites.setDataNumber(snake, "llll_turn", sprites.readDataNumber(snake, "lll_turn"))
         sprites.setDataNumber(snake, "lll_turn", sprites.readDataNumber(snake, "ll_turn"))
         sprites.setDataNumber(snake, "ll_turn", sprites.readDataNumber(snake, "l_turn"))
@@ -108,6 +115,11 @@ function make_player (color: number, col: number, row: number) {
     sprites.setDataNumber(sprite_snake, "ll_turn", -1)
     sprites.setDataNumber(sprite_snake, "lll_turn", -1)
     sprites.setDataNumber(sprite_snake, "llll_turn", -1)
+    sprites.setDataNumber(sprite_snake, "lllll_turn", -1)
+    sprites.setDataNumber(sprite_snake, "llllll_turn", -1)
+    sprites.setDataNumber(sprite_snake, "start_claim_col", 0)
+    sprites.setDataNumber(sprite_snake, "start_claim_row", 0)
+    sprites.setDataBoolean(sprite_snake, "claiming", false)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
@@ -125,16 +137,12 @@ function make_player (color: number, col: number, row: number) {
     tiles.placeOnTile(sprite_tail, tiles.getTileLocation(col, row))
     if (Math.percentChance(25)) {
         sprite_snake.vx = constants_snake_speed
-        sprites.setDataNumber(sprite_snake, "last_turn_0", CollisionDirection.Right)
     } else if (Math.percentChance(33)) {
         sprite_snake.vx = constants_snake_speed * -1
-        sprites.setDataNumber(sprite_snake, "last_turn_0", CollisionDirection.Left)
     } else if (Math.percentChance(50)) {
         sprite_snake.vy = constants_snake_speed
-        sprites.setDataNumber(sprite_snake, "last_turn_0", CollisionDirection.Bottom)
     } else {
         sprite_snake.vy = constants_snake_speed * -1
-        sprites.setDataNumber(sprite_snake, "last_turn_0", CollisionDirection.Top)
     }
     return sprite_snake
 }
@@ -159,15 +167,7 @@ function flip_direction (direction: number) {
     }
 }
 function get_inner_piece (snake_head: Sprite) {
-    location = tiles.locationInDirection(tiles.locationOfSprite(snake_head), flip_direction(sprites.readDataNumber(snake_head, "l_turn")))
-    location = tiles.locationInDirection(location, flip_direction(sprites.readDataNumber(snake_head, "ll_turn")))
-    if (sprites.readDataNumber(snake_head, "ll_turn") == flip_direction(sprites.readDataNumber(snake_head, "llll_turn"))) {
-        if (sprites.readDataNumber(snake_head, "l_turn") == sprites.readDataNumber(snake_head, "lll_turn")) {
-            location = tiles.locationInDirection(location, sprites.readDataNumber(snake_head, "ll_turn"))
-            location = tiles.locationInDirection(location, sprites.readDataNumber(snake_head, "ll_turn"))
-        }
-    }
-    return location
+    return tiles.getTileLocation(sprites.readDataNumber(snake_head, "start_claim_col"), sprites.readDataNumber(snake_head, "start_claim_row"))
 }
 function direction_to_str (direction: number) {
     if (direction == CollisionDirection.Left) {
@@ -182,7 +182,6 @@ function direction_to_str (direction: number) {
         return "-"
     }
 }
-let location: tiles.Location = null
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
@@ -209,7 +208,7 @@ game.onUpdate(function () {
             }
         }
         if (false) {
-            sprite_snake.say("" + direction_to_str(sprites.readDataNumber(sprite_snake, "l_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "ll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "lll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "llll_turn")))
+            sprite_snake.say("" + direction_to_str(sprites.readDataNumber(sprite_snake, "l_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "ll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "lll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "llll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "lllll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "llllll_turn")))
         }
     }
 })
@@ -220,6 +219,7 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vx", sprite_snake.vx)
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
+                sprites.setDataBoolean(sprite_snake, "claiming", false)
                 tiles.setTileAt(get_inner_piece(sprite_snake), color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                 pause(1000)
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
