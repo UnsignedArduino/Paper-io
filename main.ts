@@ -48,7 +48,7 @@ scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprit
     tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
 })
 function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
-    timer.throttle("snake_at_col_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column) + "_row_" + tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row) + "_turn", tile_traverse_time, function () {
+    timer.throttle("snake_color_" + sprites.readDataNumber(snake, "color"), tile_traverse_time, function () {
         sprites.setDataNumber(snake, "last_last_turn", sprites.readDataNumber(snake, "last_turn"))
         if (vx_or_vy) {
             if (pos_or_neg) {
