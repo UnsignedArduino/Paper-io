@@ -57,14 +57,15 @@ function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
                 if (!(snake.vx < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed, 0)
+                    location = direction_to_inside(sprites.readDataNumber(snake, "direction"), CollisionDirection.Right, tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row))
+                    sprites.setDataNumber(snake, "direction", CollisionDirection.Right)
                 }
             } else {
                 if (!(snake.vx > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed * -1, 0)
-                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
-                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Left)
-                    }
+                    location = direction_to_inside(sprites.readDataNumber(snake, "direction"), CollisionDirection.Left, tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row))
+                    sprites.setDataNumber(snake, "direction", CollisionDirection.Left)
                 }
             }
         } else {
@@ -72,11 +73,23 @@ function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
                 if (!(snake.vy < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed)
+                    location = direction_to_inside(sprites.readDataNumber(snake, "direction"), CollisionDirection.Bottom, tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row))
+                    sprites.setDataNumber(snake, "direction", CollisionDirection.Bottom)
                 }
             } else {
                 if (!(snake.vy > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed * -1)
+                    location = direction_to_inside(sprites.readDataNumber(snake, "direction"), CollisionDirection.Top, tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(snake), tiles.XY.row))
+                    sprites.setDataNumber(snake, "direction", CollisionDirection.Top)
+                }
+            }
+        }
+        if (sprites.readDataNumber(snake, "inside_col") == -1 || sprites.readDataNumber(snake, "inside_row") == -1) {
+            if (!(tiles.tileAtLocationEquals(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")]))) {
+                if (location) {
+                    sprites.setDataNumber(snake, "inside_col", tiles.locationXY(location, tiles.XY.column))
+                    sprites.setDataNumber(snake, "inside_row", tiles.locationXY(location, tiles.XY.row))
                 }
             }
         }
@@ -91,6 +104,9 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, false)
     }
 })
+function direction_to_inside (heading: number, to: number, col: number, row: number) {
+    return tiles.locationInDirection(tiles.locationInDirection(tiles.getTileLocation(col, row), flip_direction(heading)), to)
+}
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
         move_snake(sprite_player, true, true)
@@ -105,6 +121,7 @@ function make_player (color: number, col: number, row: number) {
     sprites.setDataBoolean(sprite_snake, "turning", false)
     sprites.setDataNumber(sprite_snake, "inside_col", -1)
     sprites.setDataNumber(sprite_snake, "inside_row", -1)
+    sprites.setDataNumber(sprite_snake, "direction", -1)
     sprites.setDataBoolean(sprite_snake, "claiming", false)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
@@ -123,12 +140,16 @@ function make_player (color: number, col: number, row: number) {
     tiles.placeOnTile(sprite_tail, tiles.getTileLocation(col, row))
     if (Math.percentChance(25)) {
         sprite_snake.vx = constants_snake_speed
+        sprites.setDataNumber(sprite_snake, "direction", CollisionDirection.Right)
     } else if (Math.percentChance(33)) {
         sprite_snake.vx = constants_snake_speed * -1
+        sprites.setDataNumber(sprite_snake, "direction", CollisionDirection.Left)
     } else if (Math.percentChance(50)) {
         sprite_snake.vy = constants_snake_speed
+        sprites.setDataNumber(sprite_snake, "direction", CollisionDirection.Bottom)
     } else {
         sprite_snake.vy = constants_snake_speed * -1
+        sprites.setDataNumber(sprite_snake, "direction", CollisionDirection.Top)
     }
     return sprite_snake
 }
@@ -152,22 +173,10 @@ function flip_direction (direction: number) {
         return CollisionDirection.Top
     }
 }
-function direction_to_str (direction: number) {
-    if (direction == CollisionDirection.Left) {
-        return "l"
-    } else if (direction == CollisionDirection.Top) {
-        return "u"
-    } else if (direction == CollisionDirection.Right) {
-        return "r"
-    } else if (direction == CollisionDirection.Bottom) {
-        return "d"
-    } else {
-        return "-"
-    }
-}
 let sprite_tail: Sprite = null
-let sprite_snake: Sprite = null
 let snake_image: Image = null
+let sprite_snake: Sprite = null
+let location: tiles.Location = null
 let color_to_body: Image[] = []
 let color_to_tile: Image[] = []
 let tile_traverse_time = 0
@@ -201,6 +210,9 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
+                if (sprites.readDataNumber(sprite_snake, "inside_col") != -1 && sprites.readDataNumber(sprite_snake, "inside_row") != -1) {
+                    tiles.setTileAt(tiles.getTileLocation(sprites.readDataNumber(sprite_snake, "inside_col"), sprites.readDataNumber(sprite_snake, "inside_row")), assets.tile`red`)
+                }
                 for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
                     tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                 }
