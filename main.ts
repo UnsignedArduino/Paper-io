@@ -44,6 +44,9 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, false, false)
     }
 })
+function inside (col: number, row: number, border: Image, target: Image) {
+    return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border)) && tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), target)
+}
 scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprite, location) {
     tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
     if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite, "head"), "claiming"))) {
@@ -111,6 +114,17 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, false)
     }
 })
+// https://en.wikipedia.org/wiki/Flood_fill
+function flood_fill (col: number, row: number, border: Image, target: Image) {
+    if (!(inside(col, row, border, target))) {
+        return
+    }
+    tiles.setTileAt(tiles.getTileLocation(col, row), target)
+    flood_fill(col + 1, row, border, target)
+    flood_fill(col - 1, row, border, target)
+    flood_fill(col, row + 1, border, target)
+    flood_fill(col, row - 1, border, target)
+}
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
         move_snake(sprite_player, true, true)
@@ -239,12 +253,10 @@ forever(function () {
                 start = get_start(sprite_snake)
                 inside_location = tiles.locationInDirection(start, sprites.readDataNumber(sprite_snake, "first_turn"))
                 sprites.setDataNumber(sprite_snake, "first_turn", -1)
-                tiles.setTileAt(start, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
-                tiles.setTileAt(inside_location, assets.tile`red`)
                 for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
                     tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                 }
-                pause(1000)
+                flood_fill(tiles.locationXY(inside_location, tiles.XY.column), tiles.locationXY(inside_location, tiles.XY.row), color_to_tile[sprites.readDataNumber(sprite_snake, "color")], assets.tile`transparency8`)
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
             }
