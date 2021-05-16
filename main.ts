@@ -44,39 +44,24 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, false, false)
     }
 })
-function inside (col: number, row: number, border: Image, target: Image) {
-    return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border)) && tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), target)
-}
 scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprite, location) {
     tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
     if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite, "head"), "claiming"))) {
         sprites.setDataBoolean(sprites.readDataSprite(sprite, "head"), "claiming", true)
-        sprites.setDataNumber(sprites.readDataSprite(sprite, "head"), "start_claim_col", tiles.locationXY(location, tiles.XY.column))
-        sprites.setDataNumber(sprites.readDataSprite(sprite, "head"), "start_claim_row", tiles.locationXY(location, tiles.XY.row))
     }
 })
 function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
     timer.throttle("snake_color_" + sprites.readDataNumber(snake, "color"), tile_traverse_time, function () {
-        sprites.setDataNumber(snake, "llllll_turn", sprites.readDataNumber(snake, "lllll_turn"))
-        sprites.setDataNumber(snake, "lllll_turn", sprites.readDataNumber(snake, "llll_turn"))
-        sprites.setDataNumber(snake, "llll_turn", sprites.readDataNumber(snake, "lll_turn"))
-        sprites.setDataNumber(snake, "lll_turn", sprites.readDataNumber(snake, "ll_turn"))
-        sprites.setDataNumber(snake, "ll_turn", sprites.readDataNumber(snake, "l_turn"))
         if (vx_or_vy) {
             if (pos_or_neg) {
                 if (!(snake.vx < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed, 0)
-                    sprites.setDataNumber(snake, "l_turn", CollisionDirection.Right)
-                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
-                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Right)
-                    }
                 }
             } else {
                 if (!(snake.vx > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed * -1, 0)
-                    sprites.setDataNumber(snake, "l_turn", CollisionDirection.Left)
                     if (sprites.readDataNumber(snake, "first_turn") == -1) {
                         sprites.setDataNumber(snake, "first_turn", CollisionDirection.Left)
                     }
@@ -87,19 +72,11 @@ function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
                 if (!(snake.vy < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed)
-                    sprites.setDataNumber(snake, "l_turn", CollisionDirection.Bottom)
-                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
-                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Bottom)
-                    }
                 }
             } else {
                 if (!(snake.vy > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed * -1)
-                    sprites.setDataNumber(snake, "l_turn", CollisionDirection.Top)
-                    if (sprites.readDataNumber(snake, "first_turn") == -1) {
-                        sprites.setDataNumber(snake, "first_turn", CollisionDirection.Top)
-                    }
                 }
             }
         }
@@ -114,17 +91,6 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, false)
     }
 })
-// https://en.wikipedia.org/wiki/Flood_fill
-function flood_fill (col: number, row: number, border: Image, target: Image) {
-    if (!(inside(col, row, border, target))) {
-        return
-    }
-    tiles.setTileAt(tiles.getTileLocation(col, row), target)
-    flood_fill(col + 1, row, border, target)
-    flood_fill(col - 1, row, border, target)
-    flood_fill(col, row + 1, border, target)
-    flood_fill(col, row - 1, border, target)
-}
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
         move_snake(sprite_player, true, true)
@@ -137,16 +103,9 @@ function make_player (color: number, col: number, row: number) {
     sprite_snake = sprites.create(snake_image, SpriteKind.Player)
     sprites.setDataNumber(sprite_snake, "color", color)
     sprites.setDataBoolean(sprite_snake, "turning", false)
-    sprites.setDataNumber(sprite_snake, "l_turn", -1)
-    sprites.setDataNumber(sprite_snake, "ll_turn", -1)
-    sprites.setDataNumber(sprite_snake, "lll_turn", -1)
-    sprites.setDataNumber(sprite_snake, "llll_turn", -1)
-    sprites.setDataNumber(sprite_snake, "lllll_turn", -1)
-    sprites.setDataNumber(sprite_snake, "llllll_turn", -1)
-    sprites.setDataNumber(sprite_snake, "start_claim_col", 0)
-    sprites.setDataNumber(sprite_snake, "start_claim_row", 0)
+    sprites.setDataNumber(sprite_snake, "inside_col", -1)
+    sprites.setDataNumber(sprite_snake, "inside_row", -1)
     sprites.setDataBoolean(sprite_snake, "claiming", false)
-    sprites.setDataNumber(sprite_snake, "first_turn", -1)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
@@ -206,11 +165,6 @@ function direction_to_str (direction: number) {
         return "-"
     }
 }
-function get_start (snake_head: Sprite) {
-    return tiles.getTileLocation(sprites.readDataNumber(snake_head, "start_claim_col"), sprites.readDataNumber(snake_head, "start_claim_row"))
-}
-let inside_location: tiles.Location = null
-let start: tiles.Location = null
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
@@ -236,9 +190,6 @@ game.onUpdate(function () {
                 tiles.placeOnTile(sprites.readDataSprite(sprite_snake, "tail"), tiles.locationInDirection(tiles.locationOfSprite(sprite_snake), CollisionDirection.Left))
             }
         }
-        if (false) {
-            sprite_snake.say("" + direction_to_str(sprites.readDataNumber(sprite_snake, "l_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "ll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "lll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "llll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "lllll_turn")) + ", " + direction_to_str(sprites.readDataNumber(sprite_snake, "llllll_turn")))
-        }
     }
 })
 forever(function () {
@@ -250,13 +201,9 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
-                start = get_start(sprite_snake)
-                inside_location = tiles.locationInDirection(start, sprites.readDataNumber(sprite_snake, "first_turn"))
-                sprites.setDataNumber(sprite_snake, "first_turn", -1)
                 for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
                     tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
                 }
-                flood_fill(tiles.locationXY(inside_location, tiles.XY.column), tiles.locationXY(inside_location, tiles.XY.row), color_to_tile[sprites.readDataNumber(sprite_snake, "color")], assets.tile`transparency8`)
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
             }
