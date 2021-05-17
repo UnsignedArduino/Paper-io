@@ -20,6 +20,7 @@ function claim_area (snake: Sprite) {
 function define_constants () {
     constants_snake_speed = 50
     tile_traverse_time = 1000 / constants_snake_speed * tiles.tileWidth()
+    tile_count = tiles.tilemapColumns() * tiles.tilemapRows()
     valid_colors = [
     1,
     2,
@@ -78,7 +79,7 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
     die(sprite)
     if (sprite_snake == sprite_player) {
-        music.footstep.play()
+        die_player()
     }
 })
 function inside (col: number, row: number, fill: Image, border: Image) {
@@ -144,6 +145,7 @@ function rotate_direction_neg_90 (direction: number) {
     }
 }
 function die (snake: Sprite) {
+    sprites.setDataNumber(snake, "claimed_tiles", tiles.getTilesByType(color_to_tile[sprites.readDataNumber(sprite_snake, "color")]).length)
     for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
         tiles.setTileAt(location, assets.tile`transparency8`)
     }
@@ -194,6 +196,26 @@ controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, true)
     }
 })
+function die_player () {
+    music.footstep.play()
+    timer.after(2000, function () {
+        game.showLongText("Game over\\n " + "\\nTime: " + format_time(spriteutils.roundWithPrecision((game.runtime() - sprites.readDataNumber(sprite_player, "create_time")) / 1000, 2)) + "\\nClaimed: " + spriteutils.roundWithPrecision(100 * (sprites.readDataNumber(sprite_player, "claimed_tiles") / tile_count), 2) + "%\\n(" + format_si(sprites.readDataNumber(sprite_player, "claimed_tiles")) + "/" + format_si(tile_count) + ")", DialogLayout.Center)
+        game.reset()
+    })
+}
+function format_si (number: number) {
+    if (number > 1000000000000) {
+        return "" + spriteutils.roundWithPrecision(number / 1000000000000, 2) + "T"
+    } else if (number > 1000000000) {
+        return "" + spriteutils.roundWithPrecision(number / 1000000000, 2) + "G"
+    } else if (number > 1000000) {
+        return "" + spriteutils.roundWithPrecision(number / 1000000, 2) + "M"
+    } else if (number > 1000) {
+        return "" + spriteutils.roundWithPrecision(number / 1000, 2) + "k"
+    } else {
+        return "" + number
+    }
+}
 function make_player (color: number, col: number, row: number) {
     snake_image = assets.image`player_image_template`
     snake_image.fill(color)
@@ -204,7 +226,9 @@ function make_player (color: number, col: number, row: number) {
     sprites.setDataNumber(sprite_snake, "inside_col", -1)
     sprites.setDataNumber(sprite_snake, "inside_row", -1)
     sprites.setDataNumber(sprite_snake, "direction", -1)
+    sprites.setDataNumber(sprite_snake, "create_time", game.runtime())
     sprites.setDataBoolean(sprite_snake, "claiming", false)
+    sprites.setDataBoolean(sprite_snake, "bot", true)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
@@ -320,6 +344,9 @@ function replace_all_tiles_with (_from: Image, to: Image) {
         tiles.setTileAt(location, to)
     }
 }
+function format_time (secs: number) {
+    return "" + Math.idiv(secs, 60) + "m " + spriteutils.roundWithPrecision(secs % 60, 2) + "s"
+}
 let iterations = 0
 let start: tiles.Location = null
 let facing: CollisionDirection = null
@@ -329,6 +356,7 @@ let tile: Image = null
 let locations: tiles.Location[] = []
 let sprite_snake: Sprite = null
 let valid_colors: number[] = []
+let tile_count = 0
 let tile_traverse_time = 0
 let constants_snake_speed = 0
 let location: tiles.Location = null
@@ -341,6 +369,7 @@ show_cursor = false
 make_tilemap()
 define_constants()
 sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
+sprites.setDataBoolean(sprite_player, "bot", false)
 scene.cameraFollowSprite(sprite_player)
 music.setVolume(200)
 game.onUpdate(function () {
@@ -364,7 +393,7 @@ forever(function () {
             if (sprite_snake.tileKindAt(TileDirection.Center, color_to_body[color])) {
                 die(sprite_snake)
                 if (sprite_snake == sprite_player) {
-                    music.footstep.play()
+                    die_player()
                 }
             }
         }
