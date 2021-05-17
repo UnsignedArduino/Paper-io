@@ -1,6 +1,9 @@
 namespace SpriteKind {
     export const Tail = SpriteKind.create()
 }
+function claim_area (snake: Sprite) {
+    replace_all_tiles_with(color_to_body[sprites.readDataNumber(snake, "color")], color_to_tile[sprites.readDataNumber(snake, "color")])
+}
 function define_constants () {
     constants_snake_speed = 50
     tile_traverse_time = 1000 / constants_snake_speed * tiles.tileWidth()
@@ -221,17 +224,22 @@ function flip_direction (direction: number) {
         return CollisionDirection.Top
     }
 }
+function replace_all_tiles_with (_from: Image, to: Image) {
+    for (let location of tiles.getTilesByType(_from)) {
+        tiles.setTileAt(location, to)
+    }
+}
 let sprite_tail: Sprite = null
 let snake_image: Image = null
 let tile: Image = null
 let location: tiles.Location = null
 let locations: tiles.Location[] = []
 let sprite_snake: Sprite = null
-let color_to_body: Image[] = []
-let color_to_tile: Image[] = []
 let valid_colors: number[] = []
 let tile_traverse_time = 0
 let constants_snake_speed = 0
+let color_to_tile: Image[] = []
+let color_to_body: Image[] = []
 let sprite_player: Sprite = null
 make_tilemap()
 define_constants()
@@ -270,9 +278,7 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
-                for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
-                    tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
-                }
+                claim_area(sprite_snake)
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
             }
