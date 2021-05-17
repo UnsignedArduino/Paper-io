@@ -77,6 +77,9 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
 })
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
     die(sprite)
+    if (sprite_snake == sprite_player) {
+        music.footstep.play()
+    }
 })
 function inside (col: number, row: number, fill: Image, border: Image) {
     return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), fill)) && !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border))
@@ -339,6 +342,7 @@ make_tilemap()
 define_constants()
 sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
 scene.cameraFollowSprite(sprite_player)
+music.setVolume(200)
 game.onUpdate(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (!(sprites.readDataBoolean(sprite_snake, "turning"))) {
@@ -359,6 +363,9 @@ forever(function () {
         for (let color of valid_colors) {
             if (sprite_snake.tileKindAt(TileDirection.Center, color_to_body[color])) {
                 die(sprite_snake)
+                if (sprite_snake == sprite_player) {
+                    music.footstep.play()
+                }
             }
         }
     }
@@ -373,6 +380,9 @@ forever(function () {
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
                 claim_area(sprite_snake)
+                if (sprite_snake == sprite_player) {
+                    music.footstep.play()
+                }
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
             }
