@@ -2,9 +2,10 @@ namespace SpriteKind {
     export const Tail = SpriteKind.create()
 }
 function claim_area (snake: Sprite) {
+    pause(20)
     replace_all_tiles_with(color_to_body[sprites.readDataNumber(snake, "color")], color_to_tile[sprites.readDataNumber(snake, "color")])
     top_leftmost = tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])[0]
-    trace(tiles.locationXY(top_leftmost, tiles.XY.column), tiles.locationXY(top_leftmost, tiles.XY.row), assets.tile`light_blue`, assets.tile`transparency8`)
+    trace(tiles.locationXY(top_leftmost, tiles.XY.column), tiles.locationXY(top_leftmost, tiles.XY.row), color_to_tile[sprites.readDataNumber(snake, "color")])
     while (true) {
         pause(100)
     }
@@ -121,6 +122,17 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, false)
     }
 })
+function rotate_direction_neg_90 (direction: number) {
+    if (direction == CollisionDirection.Left) {
+        return CollisionDirection.Bottom
+    } else if (direction == CollisionDirection.Top) {
+        return CollisionDirection.Left
+    } else if (direction == CollisionDirection.Right) {
+        return CollisionDirection.Top
+    } else {
+        return CollisionDirection.Right
+    }
+}
 function die (snake: Sprite) {
     for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
         tiles.setTileAt(location, assets.tile`transparency8`)
@@ -133,15 +145,15 @@ function die (snake: Sprite) {
 }
 // https://en.wikipedia.org/wiki/Flood_fill#Moving_the_recursion_into_a_data_structure
 function flood_fill (col: number, row: number, fill_with: Image, border: Image) {
+    show_cursor = true
     locations = []
     locations.push(tiles.getTileLocation(col, row))
     while (locations.length > 0) {
         location = locations.shift()
-        if (false) {
+        if (show_cursor) {
             tile = tiles.getTileAtLocation(location)
             tiles.setTileAt(location, assets.tile`red`)
-            pause(0)
-            tiles.setTileAt(location, tile)
+            scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
         }
         if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
             tiles.setTileAt(location, fill_with)
@@ -158,6 +170,13 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
                 locations.push(tiles.locationInDirection(location, CollisionDirection.Bottom))
             }
         }
+        if (show_cursor) {
+            tiles.setTileAt(location, tile)
+            pause(0)
+        }
+    }
+    if (show_cursor) {
+        scene.cameraFollowSprite(sprite_player)
     }
 }
 function direction_to_inside (heading: number, to: number, col: number, row: number) {
@@ -209,20 +228,59 @@ function make_player (color: number, col: number, row: number) {
     }
     return sprite_snake
 }
-function trace (col: number, row: number, fill: Image, empty: Image) {
-    location = tiles.getTileLocation(col, row)
+function trace (col: number, row: number, fill: Image) {
     show_cursor = true
-    while (true) {
-        if (show_cursor) {
-            if (tiles.getTilesByType(assets.tile`yellow`).length > 0) {
-                tiles.setTileAt(location, fill)
+    location = null
+    for (let c = 0; c <= tiles.tilemapColumns() - 1; c++) {
+        for (let r = 0; r <= tiles.tilemapRows() - 1; r++) {
+            if (tiles.tileAtLocationEquals(tiles.getTileLocation(c, tiles.tilemapColumns() - 1 - r), fill)) {
+                location = tiles.getTileLocation(c, tiles.tilemapColumns() - 1 - r)
+                break;
             }
         }
+        if (location) {
+            break;
+        }
+    }
+    facing = CollisionDirection.Left
+    start = location
+    tiles.setTileAt(start, assets.tile`wall`)
+    tile = tiles.getTileAtLocation(location)
+    iterations = 0
+    while (true) {
         if (show_cursor) {
+            tile = tiles.getTileAtLocation(location)
             tiles.setTileAt(location, assets.tile`yellow`)
             scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
             pause(0)
+            tiles.setTileAt(location, tile)
         }
+        if (tiles.tileAtLocationEquals(location, fill) || tiles.tileAtLocationEquals(location, assets.tile`wall`)) {
+            tiles.setTileAt(location, assets.tile`wall`)
+            facing = rotate_direction_neg_90(facing)
+            location = tiles.locationInDirection(location, facing)
+        } else {
+            facing = rotate_direction_pos_90(facing)
+            location = tiles.locationInDirection(location, facing)
+        }
+        iterations += 1
+        if (iterations > 8 && is_same_location(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), tiles.locationXY(start, tiles.XY.column), tiles.locationXY(start, tiles.XY.row))) {
+            break;
+        }
+    }
+    if (show_cursor) {
+        scene.cameraFollowSprite(sprite_player)
+    }
+}
+function rotate_direction_pos_90 (direction: number) {
+    if (direction == CollisionDirection.Left) {
+        return CollisionDirection.Top
+    } else if (direction == CollisionDirection.Top) {
+        return CollisionDirection.Right
+    } else if (direction == CollisionDirection.Right) {
+        return CollisionDirection.Bottom
+    } else {
+        return CollisionDirection.Left
     }
 }
 controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
@@ -245,17 +303,23 @@ function flip_direction (direction: number) {
         return CollisionDirection.Top
     }
 }
+function is_same_location (col1: number, row1: number, col2: number, row2: number) {
+    return col1 == col2 && row1 == row2
+}
 function replace_all_tiles_with (_from: Image, to: Image) {
     for (let location of tiles.getTilesByType(_from)) {
         tiles.setTileAt(location, to)
     }
 }
-let show_cursor = false
+let iterations = 0
+let start: tiles.Location = null
+let facing: CollisionDirection = null
 let sprite_tail: Sprite = null
 let snake_image: Image = null
 let tile: Image = null
 let location: tiles.Location = null
 let locations: tiles.Location[] = []
+let show_cursor = false
 let sprite_snake: Sprite = null
 let valid_colors: number[] = []
 let tile_traverse_time = 0
