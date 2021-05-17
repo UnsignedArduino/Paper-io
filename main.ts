@@ -4,8 +4,7 @@ namespace SpriteKind {
 function claim_area (snake: Sprite) {
     replace_all_tiles_with(color_to_body[sprites.readDataNumber(snake, "color")], color_to_tile[sprites.readDataNumber(snake, "color")])
     top_leftmost = tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])[0]
-    tiles.setTileAt(top_leftmost, assets.tile`yellow`)
-    scene.centerCameraAt(tiles.locationXY(top_leftmost, tiles.XY.x), tiles.locationXY(top_leftmost, tiles.XY.y))
+    trace(tiles.locationXY(top_leftmost, tiles.XY.column), tiles.locationXY(top_leftmost, tiles.XY.row), assets.tile`light_blue`, assets.tile`transparency8`)
     while (true) {
         pause(100)
     }
@@ -210,6 +209,22 @@ function make_player (color: number, col: number, row: number) {
     }
     return sprite_snake
 }
+function trace (col: number, row: number, fill: Image, empty: Image) {
+    location = tiles.getTileLocation(col, row)
+    show_cursor = true
+    while (true) {
+        if (show_cursor) {
+            if (tiles.getTilesByType(assets.tile`yellow`).length > 0) {
+                tiles.setTileAt(location, fill)
+            }
+        }
+        if (show_cursor) {
+            tiles.setTileAt(location, assets.tile`yellow`)
+            scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
+            pause(0)
+        }
+    }
+}
 controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
         move_snake(sprite_player, false, true)
@@ -235,6 +250,7 @@ function replace_all_tiles_with (_from: Image, to: Image) {
         tiles.setTileAt(location, to)
     }
 }
+let show_cursor = false
 let sprite_tail: Sprite = null
 let snake_image: Image = null
 let tile: Image = null
