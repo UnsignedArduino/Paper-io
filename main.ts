@@ -355,20 +355,22 @@ let snake_image: Image = null
 let tile: Image = null
 let locations: tiles.Location[] = []
 let sprite_snake: Sprite = null
-let valid_colors: number[] = []
 let tile_count = 0
 let tile_traverse_time = 0
 let constants_snake_speed = 0
-let location: tiles.Location = null
 let top_leftmost: tiles.Location = null
 let color_to_tile: Image[] = []
 let color_to_body: Image[] = []
+let valid_colors: number[] = []
 let sprite_player: Sprite = null
+let location: tiles.Location = null
 let show_cursor = false
 show_cursor = false
+let max_bots = 8
 make_tilemap()
 define_constants()
-sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
+location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
+sprite_player = make_player(valid_colors._pickRandom(), tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
 sprites.setDataBoolean(sprite_player, "bot", false)
 scene.cameraFollowSprite(sprite_player)
 music.setVolume(200)
