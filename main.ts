@@ -3,6 +3,12 @@ namespace SpriteKind {
 }
 function claim_area (snake: Sprite) {
     replace_all_tiles_with(color_to_body[sprites.readDataNumber(snake, "color")], color_to_tile[sprites.readDataNumber(snake, "color")])
+    top_leftmost = tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])[0]
+    tiles.setTileAt(top_leftmost, assets.tile`yellow`)
+    scene.centerCameraAt(tiles.locationXY(top_leftmost, tiles.XY.x), tiles.locationXY(top_leftmost, tiles.XY.y))
+    while (true) {
+        pause(100)
+    }
 }
 function define_constants () {
     constants_snake_speed = 50
@@ -238,6 +244,7 @@ let sprite_snake: Sprite = null
 let valid_colors: number[] = []
 let tile_traverse_time = 0
 let constants_snake_speed = 0
+let top_leftmost: tiles.Location = null
 let color_to_tile: Image[] = []
 let color_to_body: Image[] = []
 let sprite_player: Sprite = null
