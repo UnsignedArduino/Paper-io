@@ -2,12 +2,19 @@ namespace SpriteKind {
     export const Tail = SpriteKind.create()
 }
 function claim_area (snake: Sprite) {
-    pause(20)
+    pause(100)
     replace_all_tiles_with(color_to_body[sprites.readDataNumber(snake, "color")], color_to_tile[sprites.readDataNumber(snake, "color")])
     top_leftmost = tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])[0]
     trace(tiles.locationXY(top_leftmost, tiles.XY.column), tiles.locationXY(top_leftmost, tiles.XY.row), color_to_tile[sprites.readDataNumber(snake, "color")])
-    while (true) {
-        pause(100)
+    for (let location of tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])) {
+        tiles.setTileAt(location, assets.tile`temp`)
+    }
+    while (tiles.getTilesByType(assets.tile`temp`).length > 0) {
+        location = tiles.getTilesByType(assets.tile`temp`)[0]
+        flood_fill(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), color_to_tile[sprites.readDataNumber(snake, "color")], assets.tile`wall`)
+    }
+    for (let location of tiles.getTilesByType(assets.tile`wall`)) {
+        tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(snake, "color")])
     }
 }
 function define_constants () {
@@ -154,6 +161,8 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
             tile = tiles.getTileAtLocation(location)
             tiles.setTileAt(location, assets.tile`red`)
             scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
+            pause(100)
+            tiles.setTileAt(location, tile)
         }
         if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
             tiles.setTileAt(location, fill_with)
@@ -169,10 +178,6 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
             if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row) + 1, fill_with, border)) {
                 locations.push(tiles.locationInDirection(location, CollisionDirection.Bottom))
             }
-        }
-        if (show_cursor) {
-            tiles.setTileAt(location, tile)
-            pause(0)
         }
     }
     if (show_cursor) {
@@ -252,7 +257,7 @@ function trace (col: number, row: number, fill: Image) {
             tile = tiles.getTileAtLocation(location)
             tiles.setTileAt(location, assets.tile`yellow`)
             scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
-            pause(0)
+            pause(100)
             tiles.setTileAt(location, tile)
         }
         if (tiles.tileAtLocationEquals(location, fill) || tiles.tileAtLocationEquals(location, assets.tile`wall`)) {
@@ -317,13 +322,13 @@ let facing: CollisionDirection = null
 let sprite_tail: Sprite = null
 let snake_image: Image = null
 let tile: Image = null
-let location: tiles.Location = null
 let locations: tiles.Location[] = []
 let show_cursor = false
 let sprite_snake: Sprite = null
 let valid_colors: number[] = []
 let tile_traverse_time = 0
 let constants_snake_speed = 0
+let location: tiles.Location = null
 let top_leftmost: tiles.Location = null
 let color_to_tile: Image[] = []
 let color_to_body: Image[] = []
