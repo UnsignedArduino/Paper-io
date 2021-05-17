@@ -60,7 +60,9 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     }
 })
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
-    die(sprite)
+    if (sprite != sprite_player || !(debug)) {
+        die(sprite)
+    }
 })
 function inside (col: number, row: number, fill: Image, border: Image) {
     return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), fill)) && !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border))
@@ -141,10 +143,11 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
     locations.push(tiles.getTileLocation(col, row))
     while (locations.length > 0) {
         location = locations.shift()
-        if (false) {
+        if (debug) {
             tile = tiles.getTileAtLocation(location)
             tiles.setTileAt(location, assets.tile`red`)
-            pause(0)
+            scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
+            pause(20)
             tiles.setTileAt(location, tile)
         }
         if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
@@ -163,6 +166,7 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
             }
         }
     }
+    scene.cameraFollowSprite(sprite_player)
 }
 function direction_to_inside (heading: number, to: number, col: number, row: number) {
     return tiles.locationInDirection(tiles.locationInDirection(tiles.getTileLocation(col, row), flip_direction(heading)), to)
@@ -245,6 +249,8 @@ let valid_colors: number[] = []
 let tile_traverse_time = 0
 let constants_snake_speed = 0
 let sprite_player: Sprite = null
+let debug = false
+debug = true
 make_tilemap()
 define_constants()
 sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
@@ -268,7 +274,9 @@ forever(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         for (let color of valid_colors) {
             if (sprite_snake.tileKindAt(TileDirection.Center, color_to_body[color])) {
-                die(sprite_snake)
+                if (sprite_snake != sprite_player || !(debug)) {
+                    die(sprite_snake)
+                }
             }
         }
     }
