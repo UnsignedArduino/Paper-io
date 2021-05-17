@@ -104,6 +104,27 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, false)
     }
 })
+// https://en.wikipedia.org/wiki/Flood_fill#Moving_the_recursion_into_a_data_structure
+function flood_fill (col: number, row: number, fill_with: Image, border: Image) {
+    locations = []
+    locations.push(tiles.getTileLocation(col, row))
+    while (locations.length > 0) {
+        location = locations.shift()
+        if (false) {
+            tile = tiles.getTileAtLocation(location)
+            tiles.setTileAt(location, assets.tile`red`)
+            pause(0)
+            tiles.setTileAt(location, tile)
+        }
+        if (!(tiles.tileAtLocationEquals(location, fill_with)) && !(tiles.tileAtLocationEquals(location, border))) {
+            tiles.setTileAt(location, fill_with)
+            locations.push(tiles.locationInDirection(location, CollisionDirection.Left))
+            locations.push(tiles.locationInDirection(location, CollisionDirection.Top))
+            locations.push(tiles.locationInDirection(location, CollisionDirection.Right))
+            locations.push(tiles.locationInDirection(location, CollisionDirection.Bottom))
+        }
+    }
+}
 function direction_to_inside (heading: number, to: number, col: number, row: number) {
     return tiles.locationInDirection(tiles.locationInDirection(tiles.getTileLocation(col, row), flip_direction(heading)), to)
 }
@@ -175,6 +196,8 @@ function flip_direction (direction: number) {
 }
 let sprite_tail: Sprite = null
 let snake_image: Image = null
+let tile: Image = null
+let locations: tiles.Location[] = []
 let sprite_snake: Sprite = null
 let location: tiles.Location = null
 let color_to_body: Image[] = []
@@ -211,7 +234,9 @@ forever(function () {
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
                 if (sprites.readDataNumber(sprite_snake, "inside_col") != -1 && sprites.readDataNumber(sprite_snake, "inside_row") != -1) {
-                    tiles.setTileAt(tiles.getTileLocation(sprites.readDataNumber(sprite_snake, "inside_col"), sprites.readDataNumber(sprite_snake, "inside_row")), assets.tile`red`)
+                    flood_fill(sprites.readDataNumber(sprite_snake, "inside_col"), sprites.readDataNumber(sprite_snake, "inside_row"), color_to_tile[sprites.readDataNumber(sprite_snake, "color")], color_to_body[sprites.readDataNumber(sprite_snake, "color")])
+                    sprites.setDataNumber(sprite_snake, "inside_col", -1)
+                    sprites.setDataNumber(sprite_snake, "inside_row", -1)
                 }
                 for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
                     tiles.setTileAt(location, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])
