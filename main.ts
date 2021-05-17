@@ -152,7 +152,6 @@ function die (snake: Sprite) {
 }
 // https://en.wikipedia.org/wiki/Flood_fill#Moving_the_recursion_into_a_data_structure
 function flood_fill (col: number, row: number, fill_with: Image, border: Image) {
-    show_cursor = true
     locations = []
     locations.push(tiles.getTileLocation(col, row))
     while (locations.length > 0) {
@@ -161,7 +160,7 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
             tile = tiles.getTileAtLocation(location)
             tiles.setTileAt(location, assets.tile`red`)
             scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
-            pause(100)
+            pause(0)
             tiles.setTileAt(location, tile)
         }
         if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
@@ -233,8 +232,10 @@ function make_player (color: number, col: number, row: number) {
     }
     return sprite_snake
 }
+// https://en.wikipedia.org/wiki/Boundary_tracing#Square_tracing_algorithm
+// 
+// http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/square.html
 function trace (col: number, row: number, fill: Image) {
-    show_cursor = true
     location = null
     for (let c = 0; c <= tiles.tilemapColumns() - 1; c++) {
         for (let r = 0; r <= tiles.tilemapRows() - 1; r++) {
@@ -257,7 +258,7 @@ function trace (col: number, row: number, fill: Image) {
             tile = tiles.getTileAtLocation(location)
             tiles.setTileAt(location, assets.tile`yellow`)
             scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
-            pause(100)
+            pause(0)
             tiles.setTileAt(location, tile)
         }
         if (tiles.tileAtLocationEquals(location, fill) || tiles.tileAtLocationEquals(location, assets.tile`wall`)) {
@@ -323,7 +324,6 @@ let sprite_tail: Sprite = null
 let snake_image: Image = null
 let tile: Image = null
 let locations: tiles.Location[] = []
-let show_cursor = false
 let sprite_snake: Sprite = null
 let valid_colors: number[] = []
 let tile_traverse_time = 0
@@ -333,6 +333,8 @@ let top_leftmost: tiles.Location = null
 let color_to_tile: Image[] = []
 let color_to_body: Image[] = []
 let sprite_player: Sprite = null
+let show_cursor = false
+show_cursor = false
 make_tilemap()
 define_constants()
 sprite_player = make_player(9, randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
