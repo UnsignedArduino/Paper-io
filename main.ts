@@ -107,6 +107,16 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, true, false)
     }
 })
+function die (snake: Sprite) {
+    for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")])) {
+        tiles.setTileAt(location, assets.tile`transparency8`)
+    }
+    for (let location of tiles.getTilesByType(color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
+        tiles.setTileAt(location, assets.tile`transparency8`)
+    }
+    sprites.readDataSprite(snake, "tail").destroy()
+    snake.destroy()
+}
 // https://en.wikipedia.org/wiki/Flood_fill#Moving_the_recursion_into_a_data_structure
 function flood_fill (col: number, row: number, fill_with: Image, border: Image) {
     locations = []
