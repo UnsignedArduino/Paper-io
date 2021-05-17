@@ -4,6 +4,21 @@ namespace SpriteKind {
 function define_constants () {
     constants_snake_speed = 50
     tile_traverse_time = 1000 / constants_snake_speed * tiles.tileWidth()
+    valid_colors = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    14
+    ]
     color_to_tile = [
     assets.tile`transparency8`,
     assets.tile`white`,
@@ -43,6 +58,9 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
         move_snake(sprite_player, false, false)
     }
+})
+scene.onHitWall(SpriteKind.Player, function (sprite, location) {
+    die(sprite)
 })
 function inside (col: number, row: number, fill: Image, border: Image) {
     return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), fill)) && !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border))
@@ -223,6 +241,7 @@ let sprite_snake: Sprite = null
 let location: tiles.Location = null
 let color_to_body: Image[] = []
 let color_to_tile: Image[] = []
+let valid_colors: number[] = []
 let tile_traverse_time = 0
 let constants_snake_speed = 0
 let sprite_player: Sprite = null
@@ -247,8 +266,17 @@ game.onUpdate(function () {
 })
 forever(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
+        for (let color of valid_colors) {
+            if (sprite_snake.tileKindAt(TileDirection.Center, color_to_body[color])) {
+                die(sprite_snake)
+            }
+        }
+    }
+})
+forever(function () {
+    for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (sprite_snake.tileKindAt(TileDirection.Center, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
-            pause(20)
+            pause(0)
             if (tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")]).length > 0) {
                 sprites.setDataNumber(sprite_snake, "old_vx", sprite_snake.vx)
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
