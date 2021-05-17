@@ -44,6 +44,9 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
         move_snake(sprite_player, false, false)
     }
 })
+function inside (col: number, row: number, fill: Image, border: Image) {
+    return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), fill)) && !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border))
+}
 scene.onOverlapTile(SpriteKind.Tail, assets.tile`transparency8`, function (sprite, location) {
     tiles.setTileAt(location, color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite, "head"), "color")])
     if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite, "head"), "claiming"))) {
@@ -116,12 +119,20 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
             pause(0)
             tiles.setTileAt(location, tile)
         }
-        if (!(tiles.tileAtLocationEquals(location, fill_with)) && !(tiles.tileAtLocationEquals(location, border))) {
+        if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
             tiles.setTileAt(location, fill_with)
-            locations.push(tiles.locationInDirection(location, CollisionDirection.Left))
-            locations.push(tiles.locationInDirection(location, CollisionDirection.Top))
-            locations.push(tiles.locationInDirection(location, CollisionDirection.Right))
-            locations.push(tiles.locationInDirection(location, CollisionDirection.Bottom))
+            if (inside(tiles.locationXY(location, tiles.XY.column) - 1, tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
+                locations.push(tiles.locationInDirection(location, CollisionDirection.Left))
+            }
+            if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row) - 1, fill_with, border)) {
+                locations.push(tiles.locationInDirection(location, CollisionDirection.Top))
+            }
+            if (inside(tiles.locationXY(location, tiles.XY.column) + 1, tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
+                locations.push(tiles.locationInDirection(location, CollisionDirection.Right))
+            }
+            if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row) + 1, fill_with, border)) {
+                locations.push(tiles.locationInDirection(location, CollisionDirection.Bottom))
+            }
         }
     }
 }
