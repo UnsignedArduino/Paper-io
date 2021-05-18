@@ -97,6 +97,13 @@ function define_constants () {
     assets.tile`brown_body`
     ]
 }
+function sprite_count () {
+    count = 0
+    for (let kind of [SpriteKind.Player, SpriteKind.Tail, SpriteKind.HUD, SpriteKind.FakeTile]) {
+        count += sprites.allOfKind(kind).length
+    }
+    return count
+}
 controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     if (sprite_player) {
         move_snake(sprite_player, false, false)
@@ -387,9 +394,13 @@ function has_fake_tile (col: number, row: number) {
 }
 spriteutils.createRenderable(100, function (screen2) {
     if (show_debug) {
-        images.print(screen2, "FPS: " + fps, 2, 2, 15)
-        images.print(screen2, "Players: " + sprites.allOfKind(SpriteKind.Player).length, 2, 10, 15)
-        images.print(screen2, "Fake tiles: " + sprites.allOfKind(SpriteKind.FakeTile).length, 2, 18, 15)
+        images.print(screen2, "FPS: " + fps_count + "/" + fps + " (" + spriteutils.roundWithPrecision(1000 / fps, 2) + " ms)", 2, 2, 15)
+        images.print(screen2, "X: " + spriteutils.roundWithPrecision(sprite_player.x, 0) + " Y: " + spriteutils.roundWithPrecision(sprite_player.y, 0) + " C: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.column) + " R: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.row), 2, 10, 15)
+        images.print(screen2, "Claiming: " + sprites.readDataBoolean(sprite_player, "claiming"), 2, 18, 15)
+        images.print(screen2, "Claimed: " + spriteutils.roundWithPrecision(100 * (sprites.readDataNumber(sprite_player, "claimed_tiles") / tile_count), 2) + "% (" + format_si(sprites.readDataNumber(sprite_player, "claimed_tiles")) + "/" + format_si(tile_count) + ")", 2, 26, 15)
+        images.print(screen2, "Time alive: " + format_time(spriteutils.roundWithPrecision((game.runtime() - sprites.readDataNumber(sprite_player, "create_time")) / 1000, 2)), 2, 34, 15)
+        images.print(screen2, "Players: " + sprites.allOfKind(SpriteKind.Player).length + "/" + max_players, 2, 42, 15)
+        images.print(screen2, "FT: " + sprites.allOfKind(SpriteKind.FakeTile).length + " E: " + sprite_count(), 2, 50, 15)
     }
 })
 function replace_all_tiles_with (_from: Image, to: Image) {
@@ -408,8 +419,8 @@ function format_time (secs: number) {
 }
 let sprite_minimap: Sprite = null
 let minimap2: minimap.Minimap = null
-let fps_count = 0
 let fps = 0
+let fps_count = 0
 let iterations = 0
 let start: tiles.Location = null
 let facing: CollisionDirection = null
@@ -419,6 +430,7 @@ let snake_image: Image = null
 let tile: Image = null
 let locations: tiles.Location[] = []
 let sprite_tile: Sprite = null
+let count = 0
 let all_colors: number[] = []
 let tile_count = 0
 let tile_traverse_time = 0
@@ -429,11 +441,12 @@ let color_to_body: Image[] = []
 let sprite_player: Sprite = null
 let valid_colors: number[] = []
 let location: tiles.Location = null
+let max_players = 0
 let show_debug = false
 let show_cursor = false
 show_cursor = false
 show_debug = true
-let max_players = 8
+max_players = 8
 make_tilemap()
 define_constants()
 location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
@@ -521,6 +534,9 @@ forever(function () {
                     }
                 }
             }
+        }
+        if (!(spriteutils.isDestroyed(sprite_snake))) {
+            sprites.setDataNumber(sprite_snake, "claimed_tiles", tiles.getTilesByType(color_to_tile[sprites.readDataNumber(sprite_snake, "color")]).length)
         }
     }
 })
