@@ -9,7 +9,8 @@
         "small-tilemaps": "github:riknoll/small-tilemaps#v0.0.1",
         "arcade-sprite-util": "github:jwunderl/arcade-sprite-util#v0.2.0",
         "arcade-minimap": "github:microsoft/arcade-minimap#v0.6.1",
-        "arcade-text": "github:pelikhan/arcade-image-text#v0.0.4"
+        "arcade-text": "github:pelikhan/arcade-image-text#v0.0.4",
+        "Color Fading": "github:jwunderl/pxt-color#v0.2.1"
     },
     "files": [
         "main.blocks",

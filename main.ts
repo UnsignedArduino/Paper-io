@@ -271,12 +271,12 @@ function format_si (number: number) {
         return "" + number
     }
 }
-function make_player (color: number, col: number, row: number) {
+function make_player (color2: number, col: number, row: number) {
     snake_image = assets.image`player_image_template`
-    snake_image.fill(color)
+    snake_image.fill(color2)
     snake_image.drawRect(0, 0, 7, 7, 15)
     sprite_snake = sprites.create(snake_image, SpriteKind.Player)
-    sprites.setDataNumber(sprite_snake, "color", color)
+    sprites.setDataNumber(sprite_snake, "color", color2)
     sprites.setDataBoolean(sprite_snake, "turning", false)
     sprites.setDataNumber(sprite_snake, "direction", -1)
     sprites.setDataBoolean(sprite_snake, "have_direction", true)
@@ -289,15 +289,15 @@ function make_player (color: number, col: number, row: number) {
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
     sprites.setDataSprite(sprite_snake, "tail", sprite_tail)
-    tiles.setTileAt(tiles.getTileLocation(col - 1, row - 1), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col + 0, row - 1), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col + 1, row - 1), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col - 1, row + 0), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col + 0, row + 0), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col + 1, row + 0), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col - 1, row + 1), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col + 0, row + 1), color_to_tile[color])
-    tiles.setTileAt(tiles.getTileLocation(col + 1, row + 1), color_to_tile[color])
+    tiles.setTileAt(tiles.getTileLocation(col - 1, row - 1), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col + 0, row - 1), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col + 1, row - 1), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col - 1, row + 0), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col + 0, row + 0), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col + 1, row + 0), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col - 1, row + 1), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col + 0, row + 1), color_to_tile[color2])
+    tiles.setTileAt(tiles.getTileLocation(col + 1, row + 1), color_to_tile[color2])
     tiles.placeOnTile(sprite_snake, tiles.getTileLocation(col, row))
     tiles.placeOnTile(sprite_tail, tiles.getTileLocation(col, row))
     if (Math.percentChance(25)) {
@@ -476,24 +476,28 @@ let color_to_body: Image[] = []
 let claim_start_time = 0
 let sprite_player: Sprite = null
 let valid_colors: number[] = []
-let color = 0
+let color2 = 0
 let location: tiles.Location = null
 let show_debug = false
 let show_cursor = false
+color.setPalette(
+color.Black
+)
 show_cursor = false
 show_debug = false
-let spectator_mode = true
+let spectator_mode = false
 make_tilemap()
 define_constants()
 if (!(spectator_mode)) {
     location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
-    color = valid_colors._pickRandom()
-    valid_colors.removeAt(valid_colors.indexOf(color))
-    sprite_player = make_player(color, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
+    color2 = valid_colors._pickRandom()
+    valid_colors.removeAt(valid_colors.indexOf(color2))
+    sprite_player = make_player(color2, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
     sprites.setDataBoolean(sprite_player, "bot", false)
     scene.cameraFollowSprite(sprite_player)
 }
 music.setVolume(200)
+color.startFade(color.Black, color.originalPalette, 2000)
 game.onUpdate(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (!(sprites.readDataBoolean(sprite_snake, "turning"))) {
@@ -522,9 +526,9 @@ game.onUpdateInterval(2000, function () {
             }
         }
         if (location) {
-            color = valid_colors._pickRandom()
-            valid_colors.removeAt(valid_colors.indexOf(color))
-            make_player(color, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
+            color2 = valid_colors._pickRandom()
+            valid_colors.removeAt(valid_colors.indexOf(color2))
+            make_player(color2, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
         }
     }
 })
@@ -596,9 +600,9 @@ forever(function () {
                 }
             })
         }
-        for (let color of all_colors) {
+        for (let color3 of all_colors) {
             if (has_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.row))) {
-                if (get_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.row)).image.equals(color_to_body[color])) {
+                if (get_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.row)).image.equals(color_to_body[color3])) {
                     die(sprite_snake)
                     if (sprite_snake == sprite_player) {
                         die_player()
