@@ -179,6 +179,7 @@ function rotate_direction_neg_90 (direction: number) {
 }
 function die (snake: Sprite) {
     sprites.setDataNumber(snake, "claimed_tiles", tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")]).length)
+    sprites.setDataNumber(snake, "die_time", game.runtime())
     for (let sprite_tile of sprites.allOfKind(SpriteKind.FakeTile)) {
         if (sprite_tile.image.equals(color_to_body[sprites.readDataNumber(snake, "color")])) {
             sprite_tile.destroy()
@@ -243,7 +244,7 @@ controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
 function die_player () {
     music.footstep.play()
     timer.after(2000, function () {
-        game.showLongText("Game over\\n " + "\\nTime: " + format_time(spriteutils.roundWithPrecision((game.runtime() - sprites.readDataNumber(sprite_player, "create_time")) / 1000, 2)) + "\\nClaimed: " + spriteutils.roundWithPrecision(100 * (sprites.readDataNumber(sprite_player, "claimed_tiles") / tile_count), 2) + "%\\n(" + format_si(sprites.readDataNumber(sprite_player, "claimed_tiles")) + "/" + format_si(tile_count) + ")", DialogLayout.Center)
+        game.showLongText("Game over\\n " + "\\nTime: " + format_time(spriteutils.roundWithPrecision((sprites.readDataNumber(sprite_player, "die_time") - sprites.readDataNumber(sprite_player, "create_time")) / 1000, 2)) + "\\nClaimed: " + spriteutils.roundWithPrecision(100 * (sprites.readDataNumber(sprite_player, "claimed_tiles") / tile_count), 2) + "%\\n(" + format_si(sprites.readDataNumber(sprite_player, "claimed_tiles")) + "/" + format_si(tile_count) + ")", DialogLayout.Center)
         game.reset()
     })
 }
@@ -395,10 +396,17 @@ function has_fake_tile (col: number, row: number) {
 spriteutils.createRenderable(100, function (screen2) {
     if (show_debug) {
         images.print(screen2, "FPS: " + fps_count + "/" + fps + " (" + spriteutils.roundWithPrecision(1000 / fps, 2) + " ms)", 2, 2, 15)
-        images.print(screen2, "X: " + spriteutils.roundWithPrecision(sprite_player.x, 0) + " Y: " + spriteutils.roundWithPrecision(sprite_player.y, 0) + " C: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.column) + " R: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.row), 2, 10, 15)
-        images.print(screen2, "Claiming: " + sprites.readDataBoolean(sprite_player, "claiming"), 2, 18, 15)
-        images.print(screen2, "Claimed: " + spriteutils.roundWithPrecision(100 * (sprites.readDataNumber(sprite_player, "claimed_tiles") / tile_count), 2) + "% (" + format_si(sprites.readDataNumber(sprite_player, "claimed_tiles")) + "/" + format_si(tile_count) + ")", 2, 26, 15)
-        images.print(screen2, "Time alive: " + format_time(spriteutils.roundWithPrecision((game.runtime() - sprites.readDataNumber(sprite_player, "create_time")) / 1000, 2)), 2, 34, 15)
+        if (!(spriteutils.isDestroyed(sprite_player))) {
+            images.print(screen2, "X: " + spriteutils.roundWithPrecision(sprite_player.x, 0) + " Y: " + spriteutils.roundWithPrecision(sprite_player.y, 0) + " C: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.column) + " R: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.row), 2, 10, 15)
+            images.print(screen2, "Claiming: " + sprites.readDataBoolean(sprite_player, "claiming"), 2, 18, 15)
+            images.print(screen2, "Claimed: " + spriteutils.roundWithPrecision(100 * (sprites.readDataNumber(sprite_player, "claimed_tiles") / tile_count), 2) + "% (" + format_si(sprites.readDataNumber(sprite_player, "claimed_tiles")) + "/" + format_si(tile_count) + ")", 2, 26, 15)
+            images.print(screen2, "Time alive: " + format_time(spriteutils.roundWithPrecision((game.runtime() - sprites.readDataNumber(sprite_player, "create_time")) / 1000, 2)), 2, 34, 15)
+        } else {
+            images.print(screen2, "X: _ Y: _ C: _ R: _", 2, 10, 15)
+            images.print(screen2, "Claiming: _", 2, 18, 15)
+            images.print(screen2, "Claimed: _% (_/" + format_si(tile_count) + ")", 2, 26, 15)
+            images.print(screen2, "Time alive: " + format_time(spriteutils.roundWithPrecision((sprites.readDataNumber(sprite_player, "die_time") - sprites.readDataNumber(sprite_player, "create_time")) / 1000, 2)), 2, 34, 15)
+        }
         images.print(screen2, "Players: " + sprites.allOfKind(SpriteKind.Player).length + "/" + max_players, 2, 42, 15)
         images.print(screen2, "FT: " + sprites.allOfKind(SpriteKind.FakeTile).length + " E: " + sprite_count(), 2, 50, 15)
     }
