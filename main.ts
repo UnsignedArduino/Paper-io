@@ -385,6 +385,13 @@ function has_fake_tile (col: number, row: number) {
         return false
     }
 }
+spriteutils.createRenderable(100, function (screen2) {
+    if (show_debug) {
+        images.print(screen2, "FPS: " + fps, 2, 2, 15)
+        images.print(screen2, "Players: " + sprites.allOfKind(SpriteKind.Player).length, 2, 10, 15)
+        images.print(screen2, "Fake tiles: " + sprites.allOfKind(SpriteKind.FakeTile).length, 2, 18, 15)
+    }
+})
 function replace_all_tiles_with (_from: Image, to: Image) {
     for (let location of tiles.getTilesByType(_from)) {
         tiles.setTileAt(location, to)
@@ -401,6 +408,8 @@ function format_time (secs: number) {
 }
 let sprite_minimap: Sprite = null
 let minimap2: minimap.Minimap = null
+let fps_count = 0
+let fps = 0
 let iterations = 0
 let start: tiles.Location = null
 let facing: CollisionDirection = null
@@ -420,8 +429,10 @@ let color_to_body: Image[] = []
 let sprite_player: Sprite = null
 let valid_colors: number[] = []
 let location: tiles.Location = null
+let show_debug = false
 let show_cursor = false
 show_cursor = false
+show_debug = true
 let max_players = 8
 make_tilemap()
 define_constants()
@@ -447,6 +458,9 @@ game.onUpdate(function () {
         }
     }
 })
+game.onUpdate(function () {
+    fps_count += 1
+})
 game.onUpdateInterval(2000, function () {
     if (sprite_player) {
         if (sprites.allOfKind(SpriteKind.Player).length < max_players && valid_colors.length > 0) {
@@ -463,6 +477,10 @@ game.onUpdateInterval(2000, function () {
             }
         }
     }
+})
+game.onUpdateInterval(1000, function () {
+    fps = fps_count
+    fps_count = 0
 })
 forever(function () {
     for (let sprite_tail of sprites.allOfKind(SpriteKind.Tail)) {
