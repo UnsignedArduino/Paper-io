@@ -8,6 +8,7 @@ function claim_area (snake: Sprite) {
     if (show_debug) {
         claim_start_time = game.runtime()
     }
+    pause(50)
     for (let sprite_tile of sprites.allOfKind(SpriteKind.FakeTile)) {
         if (sprite_tile.image.equals(color_to_body[sprites.readDataNumber(snake, "color")])) {
             tiles.setTileAt(tiles.locationOfSprite(sprite_tile), color_to_tile[sprites.readDataNumber(snake, "color")])
@@ -33,6 +34,7 @@ function claim_area (snake: Sprite) {
 }
 function define_constants () {
     constants_snake_speed = 50
+    max_players = 6
     tile_traverse_time = 1000 / constants_snake_speed * tiles.tileWidth()
     tile_count = tiles.tilemapColumns() * tiles.tilemapRows()
     valid_colors = [
@@ -128,19 +130,19 @@ function inside (col: number, row: number, fill: Image, border: Image) {
     return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), fill)) && !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border))
 }
 function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
-    timer.throttle("snake_color_" + sprites.readDataNumber(snake, "color"), tile_traverse_time, function () {
+    timer.throttle("snake_color_" + sprites.readDataNumber(snake, "color"), tile_traverse_time * 1.5, function () {
         if (vx_or_vy) {
             if (pos_or_neg) {
                 if (!(snake.vx < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed, 0)
-                    sprites.setDataNumber(snake, "direction", CollisionDirection.Right)
+                    direction = CollisionDirection.Right
                 }
             } else {
                 if (!(snake.vx > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(constants_snake_speed * -1, 0)
-                    sprites.setDataNumber(snake, "direction", CollisionDirection.Left)
+                    direction = CollisionDirection.Left
                 }
             }
         } else {
@@ -148,16 +150,17 @@ function move_snake (snake: Sprite, vx_or_vy: boolean, pos_or_neg: boolean) {
                 if (!(snake.vy < 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed)
-                    sprites.setDataNumber(snake, "direction", CollisionDirection.Bottom)
+                    direction = CollisionDirection.Bottom
                 }
             } else {
                 if (!(snake.vy > 0)) {
                     tiles.placeOnTile(snake, tiles.locationOfSprite(snake))
                     snake.setVelocity(0, constants_snake_speed * -1)
-                    sprites.setDataNumber(snake, "direction", CollisionDirection.Top)
+                    direction = CollisionDirection.Top
                 }
             }
         }
+        sprites.setDataNumber(snake, "direction", direction)
         sprites.setDataBoolean(snake, "turning", true)
         timer.after(tile_traverse_time, function () {
             sprites.setDataBoolean(snake, "turning", false)
@@ -279,7 +282,10 @@ function make_player (color: number, col: number, row: number) {
     sprites.setDataNumber(sprite_snake, "color", color)
     sprites.setDataBoolean(sprite_snake, "turning", false)
     sprites.setDataNumber(sprite_snake, "direction", -1)
+    sprites.setDataBoolean(sprite_snake, "have_direction", true)
+    sprites.setDataBoolean(sprite_snake, "left_right", Math.percentChance(50))
     sprites.setDataNumber(sprite_snake, "create_time", game.runtime())
+    sprites.setDataNumber(sprite_snake, "turn_count", 0)
     sprites.setDataBoolean(sprite_snake, "claiming", false)
     sprites.setDataBoolean(sprite_snake, "bot", true)
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
@@ -463,11 +469,13 @@ let flood_time = 0
 let tile: Image = null
 let locations: tiles.Location[] = []
 let flood_start_time = 0
+let direction = 0
 let sprite_tile: Sprite = null
 let count = 0
 let all_colors: number[] = []
 let tile_count = 0
 let tile_traverse_time = 0
+let max_players = 0
 let constants_snake_speed = 0
 let claim_time = 0
 let top_leftmost: tiles.Location = null
@@ -476,21 +484,23 @@ let color_to_body: Image[] = []
 let claim_start_time = 0
 let sprite_player: Sprite = null
 let valid_colors: number[] = []
+let color = 0
 let location: tiles.Location = null
-let max_players = 0
 let show_debug = false
 let show_cursor = false
 show_cursor = false
 show_debug = false
-max_players = 6
+let spectator_mode = false
 make_tilemap()
 define_constants()
-location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
-let color = valid_colors._pickRandom()
-valid_colors.removeAt(valid_colors.indexOf(color))
-sprite_player = make_player(color, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
-sprites.setDataBoolean(sprite_player, "bot", false)
-scene.cameraFollowSprite(sprite_player)
+if (!(spectator_mode)) {
+    location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
+    color = valid_colors._pickRandom()
+    valid_colors.removeAt(valid_colors.indexOf(color))
+    sprite_player = make_player(color, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
+    sprites.setDataBoolean(sprite_player, "bot", false)
+    scene.cameraFollowSprite(sprite_player)
+}
 music.setVolume(200)
 game.onUpdate(function () {
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
@@ -511,19 +521,18 @@ game.onUpdate(function () {
     fps_count += 1
 })
 game.onUpdateInterval(2000, function () {
-    if (sprite_player) {
-        if (sprites.allOfKind(SpriteKind.Player).length < max_players && valid_colors.length > 0) {
-            for (let index = 0; index < 16; index++) {
-                location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
-                if (tiles.tileAtLocationEquals(location, assets.tile`transparency8`)) {
-                    break;
-                }
+    if (sprites.allOfKind(SpriteKind.Player).length < max_players && valid_colors.length > 0) {
+        location = null
+        for (let index = 0; index < 16; index++) {
+            location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
+            if (tiles.tileAtLocationEquals(location, assets.tile`transparency8`)) {
+                break;
             }
-            if (location) {
-                color = valid_colors._pickRandom()
-                valid_colors.removeAt(valid_colors.indexOf(color))
-                make_player(color, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
-            }
+        }
+        if (location) {
+            color = valid_colors._pickRandom()
+            valid_colors.removeAt(valid_colors.indexOf(color))
+            make_player(color, tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row))
         }
     }
 })
@@ -541,6 +550,13 @@ forever(function () {
             }
             if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "claiming"))) {
                 sprites.setDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "claiming", true)
+                if (sprites.readDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "bot")) {
+                    if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "have_direction"))) {
+                        sprites.setDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "left_right", Math.percentChance(25))
+                        sprites.setDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "have_direction", true)
+                        sprites.setDataNumber(sprites.readDataSprite(sprite_tail, "head"), "turn_count", 0)
+                    }
+                }
             }
         }
     }
@@ -551,6 +567,7 @@ forever(function () {
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
                 sprites.setDataBoolean(sprite_snake, "claiming", false)
+                sprites.setDataBoolean(sprite_snake, "have_direction", false)
                 claim_area(sprite_snake)
                 if (sprite_snake == sprite_player) {
                     music.footstep.play()
@@ -558,6 +575,34 @@ forever(function () {
                 sprite_snake.setVelocity(sprites.readDataNumber(sprite_snake, "old_vx"), sprites.readDataNumber(sprite_snake, "old_vy"))
                 continue;
             }
+        } else if (sprites.readDataBoolean(sprite_snake, "bot")) {
+            timer.throttle("snake_bot_" + sprites.readDataNumber(sprite_snake, "color") + "_turn", tile_traverse_time * randint(1, 2), function () {
+                if (sprites.readDataBoolean(sprite_snake, "claiming") && sprites.readDataNumber(sprite_snake, "turn_count") <= 4) {
+                    sprites.changeDataNumberBy(sprite_snake, "turn_count", 1)
+                    if (sprites.readDataBoolean(sprite_snake, "have_direction")) {
+                        if (sprites.readDataBoolean(sprite_snake, "left_right")) {
+                            direction = rotate_direction_neg_90(sprites.readDataNumber(sprite_snake, "direction"))
+                        } else {
+                            direction = rotate_direction_pos_90(sprites.readDataNumber(sprite_snake, "direction"))
+                        }
+                    } else {
+                        if (Math.percentChance(50)) {
+                            direction = rotate_direction_neg_90(sprites.readDataNumber(sprite_snake, "direction"))
+                        } else {
+                            direction = rotate_direction_pos_90(sprites.readDataNumber(sprite_snake, "direction"))
+                        }
+                    }
+                    if (direction == CollisionDirection.Left) {
+                        move_snake(sprite_snake, true, false)
+                    } else if (direction == CollisionDirection.Top) {
+                        move_snake(sprite_snake, false, false)
+                    } else if (direction == CollisionDirection.Right) {
+                        move_snake(sprite_snake, true, true)
+                    } else if (direction == CollisionDirection.Bottom) {
+                        move_snake(sprite_snake, false, true)
+                    }
+                }
+            })
         }
         for (let color of all_colors) {
             if (has_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.row))) {
@@ -577,6 +622,13 @@ forever(function () {
         }
         if (!(spriteutils.isDestroyed(sprite_snake))) {
             sprites.setDataNumber(sprite_snake, "claimed_tiles", tiles.getTilesByType(color_to_tile[sprites.readDataNumber(sprite_snake, "color")]).length)
+        }
+    }
+})
+game.onUpdateInterval(500, function () {
+    if (spectator_mode) {
+        if (sprites.allOfKind(SpriteKind.Player).length > 0) {
+            scene.cameraFollowSprite(sprites.allOfKind(SpriteKind.Player)[0])
         }
     }
 })
