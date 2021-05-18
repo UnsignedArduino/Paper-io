@@ -2,10 +2,19 @@ namespace SpriteKind {
     export const Tail = SpriteKind.create()
     export const HDU = SpriteKind.create()
     export const HUD = SpriteKind.create()
+    export const FakeTile = SpriteKind.create()
+}
+namespace LocArrayProp {
+    export const crawled = LocArrayProp.create()
 }
 function claim_area (snake: Sprite) {
-    pause(100)
-    replace_all_tiles_with(color_to_body[sprites.readDataNumber(snake, "color")], color_to_tile[sprites.readDataNumber(snake, "color")])
+    for (let sprite_tile of sprites.allOfKind(SpriteKind.FakeTile)) {
+        if (sprite_tile.image.equals(color_to_body[sprites.readDataNumber(snake, "color")])) {
+            tiles.setTileAt(tiles.locationOfSprite(sprite_tile), color_to_tile[sprites.readDataNumber(snake, "color")])
+            sprite_tile.destroy()
+        }
+    }
+    blockObject.setLocationArrayProperty(blockObject.getStoredObject(snake), LocArrayProp.crawled, [])
     top_leftmost = tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])[0]
     trace(tiles.locationXY(top_leftmost, tiles.XY.column), tiles.locationXY(top_leftmost, tiles.XY.row), color_to_tile[sprites.readDataNumber(snake, "color")])
     for (let location of tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])) {
@@ -95,10 +104,16 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
 })
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
     die(sprite)
-    if (sprite_snake == sprite_player) {
+    if (sprite == sprite_player) {
         die_player()
     }
 })
+function set_fake_tile (col: number, row: number, image2: Image) {
+    sprite_tile = sprites.create(image2, SpriteKind.FakeTile)
+    sprite_tile.z = -0.9
+    sprite_tile.setFlag(SpriteFlag.Ghost, true)
+    tiles.placeOnTile(sprite_tile, tiles.getTileLocation(col, row))
+}
 function inside (col: number, row: number, fill: Image, border: Image) {
     return !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), fill)) && !(tiles.tileAtLocationEquals(tiles.getTileLocation(col, row), border))
 }
@@ -157,8 +172,10 @@ function rotate_direction_neg_90 (direction: number) {
 }
 function die (snake: Sprite) {
     sprites.setDataNumber(snake, "claimed_tiles", tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")]).length)
-    for (let location of tiles.getTilesByType(color_to_body[sprites.readDataNumber(snake, "color")])) {
-        tiles.setTileAt(location, assets.tile`transparency8`)
+    for (let sprite_tile of sprites.allOfKind(SpriteKind.FakeTile)) {
+        if (sprite_tile.image.equals(color_to_body[sprites.readDataNumber(snake, "color")])) {
+            sprite_tile.destroy()
+        }
     }
     for (let location of tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])) {
         tiles.setTileAt(location, assets.tile`transparency8`)
@@ -199,6 +216,14 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
     if (show_cursor) {
         scene.cameraFollowSprite(sprite_player)
     }
+}
+function get_fake_tile (col: number, row: number) {
+    for (let sprite_tile of sprites.allOfKind(SpriteKind.FakeTile)) {
+        if (tiles.locationXY(tiles.locationOfSprite(sprite_tile), tiles.XY.column) == col && tiles.locationXY(tiles.locationOfSprite(sprite_tile), tiles.XY.row) == row) {
+            return sprite_tile
+        }
+    }
+    return [][0]
 }
 function direction_to_inside (heading: number, to: number, col: number, row: number) {
     return tiles.locationInDirection(tiles.locationInDirection(tiles.getTileLocation(col, row), flip_direction(heading)), to)
@@ -241,6 +266,8 @@ function make_player (color: number, col: number, row: number) {
     sprites.setDataNumber(sprite_snake, "create_time", game.runtime())
     sprites.setDataBoolean(sprite_snake, "claiming", false)
     sprites.setDataBoolean(sprite_snake, "bot", true)
+    blockObject.storeOnSprite(blockObject.create(), sprite_snake)
+    blockObject.setLocationArrayProperty(blockObject.getStoredObject(sprite_snake), LocArrayProp.crawled, [])
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
@@ -276,10 +303,10 @@ function make_player (color: number, col: number, row: number) {
 // http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/square.html
 function trace (col: number, row: number, fill: Image) {
     location = null
-    for (let c = 0; c <= tiles.tilemapColumns() - 1; c++) {
-        for (let r = 0; r <= tiles.tilemapRows() - 1; r++) {
-            if (tiles.tileAtLocationEquals(tiles.getTileLocation(c, tiles.tilemapColumns() - 1 - r), fill)) {
-                location = tiles.getTileLocation(c, tiles.tilemapColumns() - 1 - r)
+    for (let column = 0; column <= tiles.tilemapColumns() - 1; column++) {
+        for (let roww = 0; roww <= tiles.tilemapRows() - 1; roww++) {
+            if (tiles.tileAtLocationEquals(tiles.getTileLocation(column, tiles.tilemapColumns() - 1 - roww), fill)) {
+                location = tiles.getTileLocation(column, tiles.tilemapColumns() - 1 - roww)
                 break;
             }
         }
@@ -351,9 +378,22 @@ function flip_direction (direction: number) {
 function is_same_location (col1: number, row1: number, col2: number, row2: number) {
     return col1 == col2 && row1 == row2
 }
+function has_fake_tile (col: number, row: number) {
+    if (get_fake_tile(col, row)) {
+        return true
+    } else {
+        return false
+    }
+}
 function replace_all_tiles_with (_from: Image, to: Image) {
     for (let location of tiles.getTilesByType(_from)) {
         tiles.setTileAt(location, to)
+    }
+}
+function clear_fake_tile (col: number, row: number) {
+    sprite_tile = get_fake_tile(col, row)
+    if (sprite_tile) {
+        sprite_tile.destroy()
     }
 }
 function format_time (secs: number) {
@@ -365,10 +405,11 @@ let iterations = 0
 let start: tiles.Location = null
 let facing: CollisionDirection = null
 let sprite_tail: Sprite = null
+let sprite_snake: Sprite = null
 let snake_image: Image = null
 let tile: Image = null
 let locations: tiles.Location[] = []
-let sprite_snake: Sprite = null
+let sprite_tile: Sprite = null
 let all_colors: number[] = []
 let tile_count = 0
 let tile_traverse_time = 0
@@ -426,16 +467,21 @@ game.onUpdateInterval(2000, function () {
 forever(function () {
     for (let sprite_tail of sprites.allOfKind(SpriteKind.Tail)) {
         if (!(tiles.tileAtLocationEquals(tiles.locationOfSprite(sprite_tail), color_to_tile[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")]))) {
-            tiles.setTileAt(tiles.locationOfSprite(sprite_tail), color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")])
-        }
-        if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "claiming"))) {
-            sprites.setDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "claiming", true)
+            if (!(has_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row)))) {
+                blockObject.getLocationArrayProperty(blockObject.getStoredObject(sprites.readDataSprite(sprite_tail, "head")), LocArrayProp.crawled).push(tiles.locationOfSprite(sprite_tail))
+                set_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row), color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")])
+            } else if (!(get_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row)).image.equals(color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")]))) {
+                blockObject.getLocationArrayProperty(blockObject.getStoredObject(sprites.readDataSprite(sprite_tail, "head")), LocArrayProp.crawled).push(tiles.locationOfSprite(sprite_tail))
+                set_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row), color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")])
+            }
+            if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "claiming"))) {
+                sprites.setDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "claiming", true)
+            }
         }
     }
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (sprite_snake.tileKindAt(TileDirection.Center, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
-            pause(0)
-            if (tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")]).length > 0) {
+            if (sprites.readDataBoolean(sprite_snake, "claiming")) {
                 sprites.setDataNumber(sprite_snake, "old_vx", sprite_snake.vx)
                 sprites.setDataNumber(sprite_snake, "old_vy", sprite_snake.vy)
                 sprite_snake.setVelocity(0, 0)
@@ -448,13 +494,13 @@ forever(function () {
                 continue;
             }
         }
-    }
-    for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         for (let color of all_colors) {
-            if (sprite_snake.tileKindAt(TileDirection.Center, color_to_body[color])) {
-                die(sprite_snake)
-                if (sprite_snake == sprite_player) {
-                    die_player()
+            if (has_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.row))) {
+                if (get_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_snake), tiles.XY.row)).image.equals(color_to_body[color])) {
+                    die(sprite_snake)
+                    if (sprite_snake == sprite_player) {
+                        die_player()
+                    }
                 }
             }
         }
