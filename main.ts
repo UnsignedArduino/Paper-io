@@ -4,9 +4,6 @@ namespace SpriteKind {
     export const HUD = SpriteKind.create()
     export const FakeTile = SpriteKind.create()
 }
-namespace LocArrayProp {
-    export const crawled = LocArrayProp.create()
-}
 function claim_area (snake: Sprite) {
     if (show_debug) {
         claim_start_time = game.runtime()
