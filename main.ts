@@ -1,5 +1,7 @@
 namespace SpriteKind {
     export const Tail = SpriteKind.create()
+    export const HDU = SpriteKind.create()
+    export const HUD = SpriteKind.create()
 }
 function claim_area (snake: Sprite) {
     pause(100)
@@ -357,6 +359,8 @@ function replace_all_tiles_with (_from: Image, to: Image) {
 function format_time (secs: number) {
     return "" + Math.idiv(secs, 60) + "m " + spriteutils.roundWithPrecision(secs % 60, 2) + "s"
 }
+let sprite_minimap: Sprite = null
+let minimap2: minimap.Minimap = null
 let iterations = 0
 let start: tiles.Location = null
 let facing: CollisionDirection = null
@@ -402,7 +406,7 @@ game.onUpdate(function () {
         }
     }
 })
-game.onUpdateInterval(5000, function () {
+game.onUpdateInterval(2000, function () {
     if (sprite_player) {
         if (sprites.allOfKind(SpriteKind.Player).length < max_players && valid_colors.length > 0) {
             for (let index = 0; index < 16; index++) {
@@ -429,18 +433,6 @@ forever(function () {
         }
     }
     for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
-        for (let color of all_colors) {
-            if (sprite_snake.tileKindAt(TileDirection.Center, color_to_body[color])) {
-                die(sprite_snake)
-                if (sprite_snake == sprite_player) {
-                    die_player()
-                }
-            }
-        }
-    }
-})
-forever(function () {
-    for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
         if (sprite_snake.tileKindAt(TileDirection.Center, color_to_tile[sprites.readDataNumber(sprite_snake, "color")])) {
             pause(0)
             if (tiles.getTilesByType(color_to_body[sprites.readDataNumber(sprite_snake, "color")]).length > 0) {
@@ -456,5 +448,28 @@ forever(function () {
                 continue;
             }
         }
+    }
+    for (let sprite_snake of sprites.allOfKind(SpriteKind.Player)) {
+        for (let color of all_colors) {
+            if (sprite_snake.tileKindAt(TileDirection.Center, color_to_body[color])) {
+                die(sprite_snake)
+                if (sprite_snake == sprite_player) {
+                    die_player()
+                }
+            }
+        }
+    }
+})
+game.onUpdateInterval(100, function () {
+    minimap2 = minimap.minimap(MinimapScale.Sixteenth, 1, 15)
+    if (!(sprite_minimap)) {
+        sprite_minimap = sprites.create(minimap.getImage(minimap2), SpriteKind.HUD)
+        sprite_minimap.setFlag(SpriteFlag.Ghost, true)
+        sprite_minimap.setFlag(SpriteFlag.RelativeToCamera, true)
+        sprite_minimap.bottom = scene.screenHeight() - 2
+        sprite_minimap.right = scene.screenWidth() - 2
+        sprite_minimap.z = 50
+    } else {
+        sprite_minimap.setImage(minimap.getImage(minimap2))
     }
 })
