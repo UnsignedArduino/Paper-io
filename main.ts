@@ -208,11 +208,8 @@ function flood_fill (col: number, row: number, fill_with: Image, border: Image) 
     while (locations.length > 0) {
         location = locations.shift()
         if (show_cursor) {
-            tile = tiles.getTileAtLocation(location)
-            tiles.setTileAt(location, assets.tile`red`)
             scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
             pause(0)
-            tiles.setTileAt(location, tile)
         }
         if (inside(tiles.locationXY(location, tiles.XY.column), tiles.locationXY(location, tiles.XY.row), fill_with, border)) {
             tiles.setTileAt(location, fill_with)
@@ -340,15 +337,11 @@ function trace (col: number, row: number, fill: Image) {
     facing = CollisionDirection.Left
     start = location
     tiles.setTileAt(start, assets.tile`wall`)
-    tile = tiles.getTileAtLocation(location)
     iterations = 0
     while (true) {
         if (show_cursor) {
-            tile = tiles.getTileAtLocation(location)
-            tiles.setTileAt(location, assets.tile`yellow`)
             scene.centerCameraAt(tiles.locationXY(location, tiles.XY.x), tiles.locationXY(location, tiles.XY.y))
             pause(0)
-            tiles.setTileAt(location, tile)
         }
         if (tiles.tileAtLocationEquals(location, fill) || tiles.tileAtLocationEquals(location, assets.tile`wall`)) {
             tiles.setTileAt(location, assets.tile`wall`)
@@ -466,7 +459,6 @@ let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
 let flood_time = 0
-let tile: Image = null
 let locations: tiles.Location[] = []
 let flood_start_time = 0
 let direction = 0
@@ -490,7 +482,7 @@ let show_debug = false
 let show_cursor = false
 show_cursor = false
 show_debug = false
-let spectator_mode = false
+let spectator_mode = true
 make_tilemap()
 define_constants()
 if (!(spectator_mode)) {
