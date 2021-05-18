@@ -17,7 +17,6 @@ function claim_area (snake: Sprite) {
             sprite_tile.destroy()
         }
     }
-    blockObject.setLocationArrayProperty(blockObject.getStoredObject(snake), LocArrayProp.crawled, [])
     top_leftmost = tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])[0]
     trace(tiles.locationXY(top_leftmost, tiles.XY.column), tiles.locationXY(top_leftmost, tiles.XY.row), color_to_tile[sprites.readDataNumber(snake, "color")])
     for (let location of tiles.getTilesByType(color_to_tile[sprites.readDataNumber(snake, "color")])) {
@@ -282,14 +281,10 @@ function make_player (color: number, col: number, row: number) {
     sprite_snake = sprites.create(snake_image, SpriteKind.Player)
     sprites.setDataNumber(sprite_snake, "color", color)
     sprites.setDataBoolean(sprite_snake, "turning", false)
-    sprites.setDataNumber(sprite_snake, "inside_col", -1)
-    sprites.setDataNumber(sprite_snake, "inside_row", -1)
     sprites.setDataNumber(sprite_snake, "direction", -1)
     sprites.setDataNumber(sprite_snake, "create_time", game.runtime())
     sprites.setDataBoolean(sprite_snake, "claiming", false)
     sprites.setDataBoolean(sprite_snake, "bot", true)
-    blockObject.storeOnSprite(blockObject.create(), sprite_snake)
-    blockObject.setLocationArrayProperty(blockObject.getStoredObject(sprite_snake), LocArrayProp.crawled, [])
     sprite_tail = sprites.create(assets.image`tail`, SpriteKind.Tail)
     sprite_tail.setFlag(SpriteFlag.Invisible, true)
     sprites.setDataSprite(sprite_tail, "head", sprite_snake)
@@ -543,10 +538,8 @@ forever(function () {
     for (let sprite_tail of sprites.allOfKind(SpriteKind.Tail)) {
         if (!(tiles.tileAtLocationEquals(tiles.locationOfSprite(sprite_tail), color_to_tile[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")]))) {
             if (!(has_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row)))) {
-                blockObject.getLocationArrayProperty(blockObject.getStoredObject(sprites.readDataSprite(sprite_tail, "head")), LocArrayProp.crawled).push(tiles.locationOfSprite(sprite_tail))
                 set_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row), color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")])
             } else if (!(get_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row)).image.equals(color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")]))) {
-                blockObject.getLocationArrayProperty(blockObject.getStoredObject(sprites.readDataSprite(sprite_tail, "head")), LocArrayProp.crawled).push(tiles.locationOfSprite(sprite_tail))
                 set_fake_tile(tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.column), tiles.locationXY(tiles.locationOfSprite(sprite_tail), tiles.XY.row), color_to_body[sprites.readDataNumber(sprites.readDataSprite(sprite_tail, "head"), "color")])
             }
             if (!(sprites.readDataBoolean(sprites.readDataSprite(sprite_tail, "head"), "claiming"))) {
