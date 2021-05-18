@@ -415,9 +415,9 @@ function has_fake_tile (col: number, row: number) {
     }
 }
 spriteutils.createRenderable(100, function (screen2) {
-    images.print(screen2, "paper.io debug screen", 2, 2, 15)
-    images.print(screen2, "By Unsigned_Arduino", 2, 10, 15)
     if (show_debug) {
+        images.print(screen2, "paper.io debug screen", 2, 2, 15)
+        images.print(screen2, "By Unsigned_Arduino", 2, 10, 15)
         images.print(screen2, "FPS: " + fps_count + "/" + fps + " (" + spriteutils.roundWithPrecision(1000 / fps, 2) + " ms)", 2, 18, 15)
         if (!(spriteutils.isDestroyed(sprite_player))) {
             images.print(screen2, "X: " + spriteutils.roundWithPrecision(sprite_player.x, 0) + " Y: " + spriteutils.roundWithPrecision(sprite_player.y, 0) + " C: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.column) + " R: " + tiles.locationXY(tiles.locationOfSprite(sprite_player), tiles.XY.row), 2, 26, 15)
@@ -489,8 +489,8 @@ let max_players = 0
 let show_debug = false
 let show_cursor = false
 show_cursor = false
-show_debug = true
-max_players = 8
+show_debug = false
+max_players = 6
 make_tilemap()
 define_constants()
 location = tiles.getTileLocation(randint(2, tiles.tilemapColumns() - 3), randint(2, tiles.tilemapRows() - 3))
@@ -577,6 +577,12 @@ forever(function () {
                         die_player()
                     }
                 }
+            }
+        }
+        if (tiles.getTilesByType(color_to_tile[sprites.readDataNumber(sprite_snake, "color")]).length == 0) {
+            die(sprite_snake)
+            if (sprite_snake == sprite_player) {
+                die_player()
             }
         }
         if (!(spriteutils.isDestroyed(sprite_snake))) {
