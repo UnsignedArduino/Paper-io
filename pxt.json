@@ -10,7 +10,8 @@
         "arcade-sprite-util": "github:jwunderl/arcade-sprite-util#v0.2.0",
         "arcade-minimap": "github:microsoft/arcade-minimap#v0.6.1",
         "arcade-text": "github:pelikhan/arcade-image-text#v0.0.4",
-        "Color Fading": "github:jwunderl/pxt-color#v0.2.1"
+        "Color Fading": "github:jwunderl/pxt-color#v0.2.1",
+        "pxt-status-bar": "github:jwunderl/pxt-status-bar#v0.4.1"
     },
     "files": [
         "main.blocks",

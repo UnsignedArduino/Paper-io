@@ -4,6 +4,9 @@ namespace SpriteKind {
     export const HUD = SpriteKind.create()
     export const FakeTile = SpriteKind.create()
 }
+namespace StatusBarKind {
+    export const Area = StatusBarKind.create()
+}
 function claim_area (snake: Sprite) {
     if (show_debug) {
         claim_start_time = game.runtime()
@@ -104,7 +107,7 @@ function define_constants () {
 }
 function sprite_count () {
     count = 0
-    for (let kind of [SpriteKind.Player, SpriteKind.Tail, SpriteKind.HUD, SpriteKind.FakeTile]) {
+    for (let kind of [SpriteKind.Player, SpriteKind.Tail, SpriteKind.HUD, SpriteKind.FakeTile, SpriteKind.StatusBar]) {
         count += sprites.allOfKind(kind).length
     }
     return count
@@ -315,6 +318,33 @@ function make_player (color2: number, col: number, row: number) {
     }
     return sprite_snake
 }
+function update_leaderboard () {
+    for (let index = 0; index <= 4; index++) {
+        top_5_bars[index].right = scene.screenWidth() - 2
+        top_5_bars[index].setFlag(SpriteFlag.Invisible, true)
+    }
+    sorted_snakes_by_area = []
+    all_snakes = sprites.allOfKind(SpriteKind.Player)
+    for (let index = 0; index < 4; index++) {
+        if (all_snakes.length == 0) {
+            break;
+        }
+        sprite_highest_area = all_snakes[0]
+        for (let sprite_snake of all_snakes) {
+            if (sprites.readDataNumber(sprite_snake, "claimed_tiles") >= sprites.readDataNumber(sprite_highest_area, "claimed_tiles")) {
+                sprite_highest_area = sprite_snake
+            }
+        }
+        sorted_snakes_by_area.push(all_snakes.removeAt(all_snakes.indexOf(sprite_highest_area)))
+    }
+    for (let index = 0; index <= sorted_snakes_by_area.length - 1; index++) {
+        top_5_bars[index].value = sprites.readDataNumber(sorted_snakes_by_area[index], "claimed_tiles")
+        top_5_bars[index].setColor(sprites.readDataNumber(sorted_snakes_by_area[index], "color"), 13)
+        top_5_bars[index].setBarBorder(1, sprites.readDataNumber(sorted_snakes_by_area[index], "color"))
+        top_5_bars[index].setLabel("" + spriteutils.roundWithPrecision(sprites.readDataNumber(sorted_snakes_by_area[index], "claimed_tiles") / tile_count * 100, 2) + "%", 15)
+        top_5_bars[index].setFlag(SpriteFlag.Invisible, false)
+    }
+}
 // https://en.wikipedia.org/wiki/Boundary_tracing#Square_tracing_algorithm
 // 
 // http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/square.html
@@ -443,6 +473,21 @@ function clear_fake_tile (col: number, row: number) {
         sprite_tile.destroy()
     }
 }
+function create_leaderboard () {
+    top_5_bars = []
+    for (let index = 0; index < 5; index++) {
+        top_5_bars.push(statusbars.create(60, 4, StatusBarKind.Area))
+    }
+    for (let index = 0; index <= 4; index++) {
+        top_5_bars[index].top = index * 6 + 2
+        top_5_bars[index].max = tile_count
+        top_5_bars[index].value = 1000
+        top_5_bars[index].setColor(15, 13)
+        top_5_bars[index].setBarBorder(1, 15)
+        top_5_bars[index].setLabel("0%", 15)
+        top_5_bars[index].setStatusBarFlag(StatusBarFlag.InvertFillDirection, true)
+    }
+}
 function format_time (secs: number) {
     return "" + Math.idiv(secs, 60) + "m " + spriteutils.roundWithPrecision(secs % 60, 2) + "s"
 }
@@ -455,6 +500,10 @@ let iterations = 0
 let start: tiles.Location = null
 let facing: CollisionDirection = null
 let trace_start_time = 0
+let sprite_highest_area: Sprite = null
+let all_snakes: Sprite[] = []
+let sorted_snakes_by_area: Sprite[] = []
+let top_5_bars: StatusBarSprite[] = []
 let sprite_tail: Sprite = null
 let sprite_snake: Sprite = null
 let snake_image: Image = null
@@ -496,6 +545,7 @@ if (!(spectator_mode)) {
     sprites.setDataBoolean(sprite_player, "bot", false)
     scene.cameraFollowSprite(sprite_player)
 }
+create_leaderboard()
 music.setVolume(200)
 color.startFade(color.Black, color.originalPalette, 2000)
 game.onUpdate(function () {
@@ -640,4 +690,5 @@ game.onUpdateInterval(100, function () {
     } else {
         sprite_minimap.setImage(minimap.getImage(minimap2))
     }
+    update_leaderboard()
 })
