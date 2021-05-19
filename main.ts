@@ -480,6 +480,7 @@ function create_leaderboard () {
     }
     for (let index = 0; index <= 4; index++) {
         top_5_bars[index].top = index * 6 + 2
+        top_5_bars[index].z = 20
         top_5_bars[index].max = tile_count
         top_5_bars[index].value = 1000
         top_5_bars[index].setColor(15, 13)
